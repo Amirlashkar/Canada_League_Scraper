@@ -1,0 +1,116 @@
+{% extends './base.html' %}
+{% block title %} Data Finder {% endblock %}
+{% block content %}
+<head>
+    <style class="text/css">
+        .center {
+            justify-content: center;
+            text-align: center;
+            align-items: center;
+        }
+        .main-panel {
+            background-color: rgb(243, 243, 243);
+            border-radius: 10px;
+            box-shadow: 0px 0px 20px 3px rgb(0, 0, 0, 0.3);
+            font-family: "poppins";
+            margin-top: 350px;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <form action="" method="post">
+        {% csrf_token %}
+        <div class="col-md-6 offset-md-3 center main-panel">
+            <p>
+                Find Carleton data between 
+                <span>
+                    <input type="hidden" id="start-year-input" name="start-year" value="">
+                    <input type="hidden" id="start-month-input" name="start-month" value="">
+                    <input type="hidden" id="start-day-input" name="start-day" value="">
+                    <div class="date-dropdown" id="start-date"></div>
+                </span>
+                &
+                <span>
+                    <input type="hidden" id="end-year-input" name="end-year" value="">
+                    <input type="hidden" id="end-month-input" name="end-month" value="">
+                    <input type="hidden" id="end-day-input" name="end-day" value="">
+                    <div class="date-dropdown" id="end-date"></div>
+                </span>
+            </p>
+            <button class="btn btn-success" name="search">Search</button>
+            {% if result == 'Empty' %}
+            <p>There is no data in such date</p>
+            {% elif file_ready %}
+            <p>Tracked data is ready to download</p>
+            <button class="btn btn-success" name="download" style="background-color: black; border-color: black;">Download</button>
+            {% endif %}
+        </div>
+    </form>
+    <script>
+        function createDateDropdown(parentId, yearId, yearInputId, monthId, monthInputId, dayId, dayInputId) {
+           // create year dropdown
+           const year = document.createElement('select');
+           year.id = yearId;
+           for (let i = new Date().getFullYear(); i > 1900; i--) {
+               let option = document.createElement('option');
+               option.value = i;
+               option.textContent = i;
+               year.appendChild(option);
+           }
+           
+           // create month dropdown
+           const month = document.createElement('select');
+           month.id = monthId;
+           for (let i = 1; i <= 12; i++) {
+               let option = document.createElement('option');
+               option.value = i;
+               option.textContent = i;
+               month.appendChild(option);
+           }
+           
+           // create day dropdown
+           const day = document.createElement('select');
+           day.id = dayId;
+           
+           function populateDays() {
+               const selectedYear = year.value;
+               const selectedMonth = month.value;
+               const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+               
+               day.innerHTML = '';
+               for (let i = 1; i <= daysInMonth; i++) {
+               let option = document.createElement('option');
+               option.value = i;
+               option.textContent = i;
+               day.appendChild(option);
+               }
+               
+               // update hidden inputs with selected date values
+               document.getElementById(yearInputId).value = selectedYear;
+               document.getElementById(monthInputId).value = selectedMonth;
+               document.getElementById(dayInputId).value = day.value;
+           }
+           
+           year.addEventListener('change', populateDays);
+           month.addEventListener('change', populateDays);
+           day.addEventListener('change', () => {
+               document.getElementById(dayInputId).value = day.value;
+           });
+           
+           populateDays();
+           
+           // add dropdowns to parent element
+           const parent = document.getElementById(parentId);
+           parent.appendChild(year);
+           parent.appendChild(month);
+           parent.appendChild(day);
+       }
+
+       createDateDropdown('start-date', 'start-year', 'start-year-input', 
+       'start-month', 'start-month-input', 'start-day', 'start-day-input');
+       createDateDropdown('end-date', 'end-year', 'end-year-input', 
+       'end-month', 'end-month-input', 'end-day', 'end-day-input');
+   </script>
+</body>
+{% endblock %}
