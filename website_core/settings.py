@@ -25,7 +25,19 @@ SECRET_KEY = 'django-insecure-5&05501k9y2s*)3&xo3_(l^26y16=#o(9(o+jyzg-up*3+skdb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1"]
+import pycurl
+from io import BytesIO
+
+# Determine Public IP address of EC2 instance
+buffer = BytesIO()
+c = pycurl.Curl()
+c.setopt(c.URL, 'checkip.amazonaws.com')
+c.setopt(c.WRITEDATA, buffer)
+c.perform()
+c.close()
+ip_add = buffer.getvalue().decode('iso-8859-1').strip()
+
+ALLOWED_HOSTS = [ip_add, "127.0.0.1"]
 
 
 # Application definition

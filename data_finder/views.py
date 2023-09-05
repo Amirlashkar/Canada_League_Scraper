@@ -11,8 +11,12 @@ def is_superuser(request):
 def data_finder(request):
     render_dict = {}
     print(f"USER: {request.user.username}")
+    users_folder_path = os.path.join(os.getcwd(), "users")
     user_path = os.path.join(os.getcwd(), "users", request.user.username)
     if not os.path.exists(user_path):
+        if not os.path.exists(users_folder_path):
+            os.mkdir(users_folder_path)
+
         os.mkdir(user_path)
 
     if "search" in request.POST:
