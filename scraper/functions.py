@@ -3,7 +3,10 @@ from datetime import datetime
 import pandas as pd
 import os
 
-inventory_path = os.path.join(os.getcwd(), "data", "inventory.csv")
+inventory_path = os.path.join(os.getcwd(), "data", "inventory.csv")    
+if not os.exists(inventory_path):
+    df = pd.DataFrame(columns=["Follow Up Team", "Opponent Team", "Date"])
+    df.to_csv(inventory_path)
 
 def main_sheet(df_list:list, sheet_name:str) -> None:
     q = 1
