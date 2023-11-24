@@ -4,18 +4,21 @@ import pandas as pd
 import os
 
 inventory_path = os.path.join(os.getcwd(), "data", "inventory.csv")    
-if not os.exists(inventory_path):
+if not os.path.exists(inventory_path):
     df = pd.DataFrame(columns=["Follow Up Team", "Opponent Team", "Date"])
     df.to_csv(inventory_path)
 
 def main_sheet(df_list:list, sheet_name:str) -> None:
     q = 1
     ls = []
-    for df in df_list:
-        quarter_row = pd.DataFrame([[f"Quarter {q}" for _ in range(6)]], columns=df.columns)
-        df = pd.concat([quarter_row, df], ignore_index=True)
-        ls.append(df)
-        q += 1
+    for i, df in enumerate(df_list):
+        if type(df) == pd.DataFrame:
+            quarter_row = pd.DataFrame([[f"Quarter {q}" for _ in range(6)]], columns=df.columns)
+            print(df_list[i - 1])
+            quarter_row["Home"] = [df_list[i - 1]]
+            df = pd.concat([quarter_row, df], ignore_index=True)
+            ls.append(df)
+            q += 1
 
     df = pd.concat(ls, ignore_index=True)
     data_path = os.path.join(os.getcwd(), "data")

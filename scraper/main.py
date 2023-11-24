@@ -7,9 +7,9 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import pandas as pd
 import requests
+import os
 import yaml
 import time
-import sys
 from functions import main_sheet, inventory_sheet, check_inventory
 
 # loading config file
@@ -18,9 +18,9 @@ with open("scraper/config.yml", "rb") as f:
     cfg = cfg["main"]
 
 followup_team = "Carleton"
-
+season = "2023-24"
 driver = webdriver.Chrome(executable_path=cfg["chrome_driver_path"])
-driver.get(f"https://universitysport.prestosports.com/sports/mbkb/2022-23/schedule?team={followup_team}")
+driver.get(f"https://universitysport.prestosports.com/sports/mbkb/{season}/schedule?team={followup_team}")
 
 # function to check if an element exists
 def check_exists(by:str, target:str):
@@ -50,23 +50,31 @@ def wait_till_located(by:str, target:str, timestamp:int):
 driver.maximize_window()
 
 # name of opponent teams
-op_teams = driver.find_elements(By.XPATH, "//a[contains(@class, 'team-name')]")
+op_teams = driver.find_elements(By.XPATH, "//td[contains(@class, 'e_team')]")
 op_teams_ = [str(element.text) for element in op_teams]
 
 # # getting elements of last column Box Scores link
 # links = driver.find_elements(By.XPATH, "//span[contains(text(), 'Box Score')]/..")
 
-rss_feed = requests.get(f"https://universitysport.prestosports.com/sports/mbkb/2022-23/schedule?print=rss&team={followup_team}").content
+rss_feed = requests.get(f"https://universitysport.prestosports.com/sports/mbkb/{season}/schedule?print=rss&team={followup_team}").content
 rss_feed = BeautifulSoup(rss_feed, features="xml")
 dates = rss_feed.find_all("dc:date")
 
+# XPATH for Starter --> f"//section[contains(@class, 'active')]//span[@class='team-name' and contains(text(), '{followup_team}')]/../../..//a[@class='player-name']"
+
+quarters_player_dict = {}
 # iterating over every link to get needed Data
 for i, op_team in enumerate(op_teams_):
     date_of_match = dates[i].text.split("T")[0]
 
     wait_till_located("XPATH", "//a[@class='link' and ./span[2][contains(text(), 'Box Score')]]", 1)
 
-    sheet_name = followup_team + "|" + op_team + "|" + date_of_match
+    sheet_name = followup_team + "_" + op_team + "_" + date_of_match
+    sheet_path = os.path.join(os.getcwd(), "data", sheet_name + ".csv")
+    print("###", sheet_path)
+    if os.path.exists(sheet_path):
+        print("###hello")
+        continue
     # getting elements of last column Box Scores link
     links = driver.find_elements(By.XPATH, "//a[@class='link' and ./span[2][contains(text(), 'Box Score')]]")
     # clicking on link
@@ -76,6 +84,15 @@ for i, op_team in enumerate(op_teams_):
     links[i].click()
     # waiting for link to load
     wait_till_located("XPATH", "//a[contains(text(),'Play by Play')]", 1)
+
+    for q in range(4):
+        driver.find_element(By.XPATH, f"//a[contains(text(),'{q + 1}') and contains(text(), 'Qtr')]").click()
+        wait_till_located("XPATH", f"//section[contains(@class, 'active')]//h1[contains(text(), 'Period{q + 1}')]", 1)
+        players_xpath_pattern = f"//section[contains(@class, 'active')]//span[@class='team-name' and contains(text(), '{followup_team}')]/../../..//*[self::span or self::a][@class='player-name']"
+        raw_players = driver.find_elements(By.XPATH, players_xpath_pattern)
+        raw_players = [element.text for element in raw_players]
+        quarters_player_dict[q + 1] = {"starters":raw_players[:5], "reserves":raw_players[5:]}
+
     # clicking on Play by Play Button
     driver.find_element(By.XPATH, "//a[contains(text(),'Play by Play')]").click()
     # wait to load Play by Play tab
@@ -90,6 +107,8 @@ for i, op_team in enumerate(op_teams_):
         rows = element.find_elements(By.CLASS_NAME, "row")
         
         df = pd.DataFrame(columns=["Time", "Home", "H-event", "Score", "V-event", "Visitor"])
+        df_list.append(quarters_player_dict[qn + 1])
+
         for row in rows:
 
             driver.execute_script("arguments[0].scrollIntoView();", row)
@@ -146,5 +165,6 @@ for i, op_team in enumerate(op_teams_):
     if check_inventory(followup_team, op_team, date_of_match):
         main_sheet(df_list, sheet_name)
         inventory_sheet(followup_team, op_team, date_of_match)
-        
-    driver.back() ; driver.back()
+       
+    for i in range(5):
+        driver.back()
