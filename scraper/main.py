@@ -71,9 +71,7 @@ for i, op_team in enumerate(op_teams_):
 
     sheet_name = followup_team + "_" + op_team + "_" + date_of_match
     sheet_path = os.path.join(os.getcwd(), "data", sheet_name + ".csv")
-    print("###", sheet_path)
     if os.path.exists(sheet_path):
-        print("###hello")
         continue
     # getting elements of last column Box Scores link
     links = driver.find_elements(By.XPATH, "//a[@class='link' and ./span[2][contains(text(), 'Box Score')]]")
