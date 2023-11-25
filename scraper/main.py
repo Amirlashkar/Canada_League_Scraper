@@ -164,5 +164,5 @@ for i, op_team in enumerate(op_teams_):
         main_sheet(df_list, sheet_name)
         inventory_sheet(followup_team, op_team, date_of_match)
        
-    for i in range(5):
+    for i in range(6):
         driver.back()
