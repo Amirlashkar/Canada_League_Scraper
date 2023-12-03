@@ -1,7 +1,7 @@
-/scraper/test.py
 /data
 /users
 db.sqlite3
 __pycache__/
 **/.env**
 **/.DS_Store**
+**/test.py**

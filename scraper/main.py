@@ -13,112 +13,89 @@ import requests
 import os
 import yaml
 import time
-from functions import main_sheet, inventory_sheet, check_inventory
+from datetime import datetime
+from functions import *
 
 # loading config file
 with open("scraper/config.yml", "rb") as f:
     cfg = yaml.load(f, yaml.Loader)
     cfg = cfg["main"]
 
-followup_team = "Carleton"
 season = "2023-24"
 driver = webdriver.Chrome(executable_path=cfg["chrome_driver_path"])
-driver.get(
-    f"https://universitysport.prestosports.com/sports/mbkb/{season}/schedule?team={followup_team}"
-)
-
-
-# function to check if an element exists
-def check_exists(by: str, target: str):
-    try:
-        if by == "XPATH":
-            driver.find_element(By.XPATH, target)
-        elif by == "ID":
-            driver.find_element(By.ID, target)
-        elif by == "CLASS_NAME":
-            driver.find_element(By.CLASS_NAME, target)
-        elif by == "LINK_TEXT":
-            driver.find_element(By.LINK_TEXT, target)
-        elif by == "TAG_NAME":
-            driver.find_element(By.TAG_NAME, target)
-    except NoSuchElementException:
-        return False
-    except StaleElementReferenceException:
-        return False
-    return True
-
-
-# this function causes driver to wait in a loop till an element exists
-def wait_till_located(by: str, target: str, timestamp: int):
-    while check_exists(by, target) == False:
-        print("Loading page...")
-        time.sleep(timestamp)
-
+driver.get(f"https://universitysport.prestosports.com/sports/mbkb/{season}/schedule")
 
 driver.maximize_window()
 
-# name of opponent teams
-op_teams = driver.find_elements(By.XPATH, "//td[contains(@class, 'e_team')]")
-op_teams_ = [str(element.text) for element in op_teams]
-
-# # getting elements of last column Box Scores link
-# links = driver.find_elements(By.XPATH, "//span[contains(text(), 'Box Score')]/..")
-
-rss_feed = requests.get(
-    f"https://universitysport.prestosports.com/sports/mbkb/{season}/schedule?print=rss&team={followup_team}"
-).content
-rss_feed = BeautifulSoup(rss_feed, features="xml")
-dates = rss_feed.find_all("dc:date")
+# getting elements of last column Box Scores link
+box_scores = driver.find_elements(
+    By.XPATH, "//a[@class='link' and ./span[2][contains(text(), 'Box Score')]]"
+)
 
 # XPATH for Starter --> f"//section[contains(@class, 'active')]//span[@class='team-name' and contains(text(), '{followup_team}')]/../../..//a[@class='player-name']"
 
-quarters_player_dict = {}
+quarters_player_dict = {key: {} for key in range(1, 5)}
 # iterating over every link to get needed Data
-for i, op_team in enumerate(op_teams_):
-    date_of_match = dates[i].text.split("T")[0]
-
+for i, box_score in enumerate(box_scores):
     wait_till_located(
-        "XPATH", "//a[@class='link' and ./span[2][contains(text(), 'Box Score')]]", 1
+        driver,
+        "XPATH",
+        "//a[@class='link' and ./span[2][contains(text(), 'Box Score')]]",
+        1,
     )
 
-    sheet_name = followup_team + "_" + op_team + "_" + date_of_match
-    sheet_path = os.path.join(os.getcwd(), "data", sheet_name + ".csv")
-    if os.path.exists(sheet_path):
-        continue
     # getting elements of last column Box Scores link
     links = driver.find_elements(
         By.XPATH, "//a[@class='link' and ./span[2][contains(text(), 'Box Score')]]"
     )
     # clicking on link
-    print(f"########################## {op_team} ##########################")
     driver.execute_script("arguments[0].scrollIntoView();", links[i])
     time.sleep(1)
     links[i].click()
+
+    head_info = driver.find_element(By.XPATH, "//div[@class = 'head']/h1").text.split(
+        "\n"
+    )
+    visitor_team = head_info[0].split(" at ")[0]
+    home_team = head_info[0].split(" at ")[1]
+    date_of_match = datetime.strptime(head_info[1], "%B %d, %Y").strftime("%m_%d_%Y")
+    sheet_name = f"{home_team}_{visitor_team}_{date_of_match}.csv"
+
+    if os.path.exists(os.path.join(os.getcwd(), "data", sheet_name)):
+        driver.back()
+        continue
+
+    print(
+        f"########################## {visitor_team} at {home_team} ##########################"
+    )
     # waiting for link to load
-    wait_till_located("XPATH", "//a[contains(text(),'Play by Play')]", 1)
+    wait_till_located(driver, "XPATH", "//a[contains(text(),'Play by Play')]", 1)
 
     for q in range(4):
         driver.find_element(
             By.XPATH, f"//a[contains(text(),'{q + 1}') and contains(text(), 'Qtr')]"
         ).click()
         wait_till_located(
+            driver,
             "XPATH",
             f"//section[contains(@class, 'active')]//h1[contains(text(), 'Period{q + 1}')]",
             1,
         )
-        players_xpath_pattern = f"//section[contains(@class, 'active')]//span[@class='team-name' and contains(text(), '{followup_team}')]/../../..//*[self::span or self::a][@class='player-name']"
-        raw_players = driver.find_elements(By.XPATH, players_xpath_pattern)
-        raw_players = [element.text for element in raw_players]
-        quarters_player_dict[q + 1] = {
-            "starters": raw_players[:5],
-            "reserves": raw_players[5:],
-        }
+        teams_dict = {visitor_team: "Visitor", home_team: "Home"}
+        for team in teams_dict:
+            players_xpath_pattern = f"//section[contains(@class, 'active')]//span[@class='team-name' and contains(text(), '{team}')]/../../..//*[self::span or self::a][@class='player-name']"
+            raw_players = driver.find_elements(By.XPATH, players_xpath_pattern)
+            raw_players = [element.text for element in raw_players]
+            quarters_player_dict[q + 1][teams_dict[team]] = {
+                "starters": raw_players[:5],
+                "reserves": raw_players[5:],
+            }
 
     # clicking on Play by Play Button
     driver.find_element(By.XPATH, "//a[contains(text(),'Play by Play')]").click()
     # wait to load Play by Play tab
     wait_till_located(
-        "XPATH", "//span[@class='label' and contains(text(), 'Periods:')]", 1
+        driver, "XPATH", "//span[@class='label' and contains(text(), 'Periods:')]", 1
     )
     # getting quarters element
     quarters_element = driver.find_elements(By.XPATH, "//table[@role='presentation']")
@@ -188,9 +165,9 @@ for i, op_team in enumerate(op_teams_):
 
         df_list.append(df)
 
-    if check_inventory(followup_team, op_team, date_of_match):
+    if check_inventory(home_team, visitor_team, date_of_match):
         main_sheet(df_list, sheet_name)
-        inventory_sheet(followup_team, op_team, date_of_match)
+        inventory_sheet(home_team, visitor_team, date_of_match)
 
     for i in range(6):
         driver.back()
