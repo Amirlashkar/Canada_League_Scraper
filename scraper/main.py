@@ -3,6 +3,8 @@ from selenium.common.exceptions import (
     NoSuchElementException,
     StaleElementReferenceException,
 )
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -22,7 +24,7 @@ with open("scraper/config.yml", "rb") as f:
     cfg = cfg["main"]
 
 season = "2023-24"
-driver = webdriver.Chrome(executable_path=cfg["chrome_driver_path"])
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 driver.get(f"https://universitysport.prestosports.com/sports/mbkb/{season}/schedule")
 
 driver.maximize_window()
