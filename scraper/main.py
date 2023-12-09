@@ -5,13 +5,8 @@ from selenium.common.exceptions import (
 )
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-from bs4 import BeautifulSoup
 import pandas as pd
-import requests
 import os
 import yaml
 import time
@@ -58,10 +53,26 @@ for i, box_score in enumerate(box_scores):
     head_info = driver.find_element(By.XPATH, "//div[@class = 'head']/h1").text.split(
         "\n"
     )
-    visitor_team = head_info[0].split(" at ")[0]
-    home_team = head_info[0].split(" at ")[1]
+    try:
+        visitor_team = head_info[0].split(" at ")[0]
+        home_team = head_info[0].split(" at ")[1]
+    except IndexError:
+        try:
+            visitor_team = head_info[0].split(" vs. ")[0]
+            home_team = head_info[0].split(" vs. ")[1]
+        except IndexError:
+            visitor_team = head_info[0].split(" vs ")[0]
+            home_team = head_info[0].split(" vs ")[1]
+
     date_of_match = datetime.strptime(head_info[1], "%B %d, %Y").strftime("%m_%d_%Y")
     sheet_name = f"{home_team}_{visitor_team}_{date_of_match}.csv"
+
+    try:
+        driver.find_element(By.XPATH, "//a[contains(@data-view, 'period5')]")
+        driver.back()
+        continue
+    except NoSuchElementException:
+        pass
 
     if os.path.exists(os.path.join(os.getcwd(), "data", sheet_name)):
         driver.back()
