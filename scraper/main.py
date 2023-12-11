@@ -29,8 +29,6 @@ box_scores = driver.find_elements(
     By.XPATH, "//a[@class='link' and ./span[2][contains(text(), 'Box Score')]]"
 )
 
-# XPATH for Starter --> f"//section[contains(@class, 'active')]//span[@class='team-name' and contains(text(), '{followup_team}')]/../../..//a[@class='player-name']"
-
 quarters_player_dict = {key: {} for key in range(1, 5)}
 # iterating over every link to get needed Data
 for i, box_score in enumerate(box_scores):
@@ -49,6 +47,12 @@ for i, box_score in enumerate(box_scores):
     driver.execute_script("arguments[0].scrollIntoView();", links[i])
     time.sleep(1)
     links[i].click()
+
+    try:
+        driver.find_element(By.XPATH, "//a[contains(@data-view, 'period1')]")
+    except NoSuchElementException:
+        driver.back()
+        continue
 
     head_info = driver.find_element(By.XPATH, "//div[@class = 'head']/h1").text.split(
         "\n"
@@ -96,7 +100,7 @@ for i, box_score in enumerate(box_scores):
         )
         teams_dict = {visitor_team: "Visitor", home_team: "Home"}
         for team in teams_dict:
-            players_xpath_pattern = f"//section[contains(@class, 'active')]//span[@class='team-name' and contains(text(), '{team}')]/../../..//*[self::span or self::a][@class='player-name']"
+            players_xpath_pattern = f"//section[contains(@class, 'active')]//span[@class='team-name' and contains(text(), \"{team}\")]/../../..//*[self::span or self::a][@class='player-name']"
             raw_players = driver.find_elements(By.XPATH, players_xpath_pattern)
             raw_players = [element.text for element in raw_players]
             quarters_player_dict[q + 1][teams_dict[team]] = {

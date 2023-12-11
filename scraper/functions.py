@@ -1,5 +1,6 @@
 from zipfile import ZipFile, ZIP_DEFLATED
 from datetime import datetime
+import time
 import pandas as pd
 import os
 from selenium.webdriver.common.by import By
