@@ -1,0 +1,13 @@
+.center {
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+}
+.main-panel {
+    background-color: rgb(243, 243, 243);
+    border-radius: 10px;
+    box-shadow: 0px 0px 20px 3px rgb(0, 0, 0, 0.3);
+    font-family: "poppins";
+    margin-top: 350px;
+    padding: 10px;
+}

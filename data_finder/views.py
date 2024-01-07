@@ -5,23 +5,35 @@ from scraper.functions import *
 import time
 import os
 
+
 def is_superuser(request):
-    return render(request, "is_superuser.html", {"is_superuser": str(request.user.is_superuser)})
+    return render(
+        request, "is_superuser.html", {"is_superuser": str(request.user.is_superuser)}
+    )
+
 
 def data_finder(request):
     render_dict = {}
     print(f"USER: {request.user.username}")
-    users_folder_path = os.path.join(os.getcwd(), "users")
     user_path = os.path.join(os.getcwd(), "users", request.user.username)
     if not os.path.exists(user_path):
-        if not os.path.exists(users_folder_path):
-            os.mkdir(users_folder_path)
-
-        os.mkdir(user_path)
+        os.makedirs(user_path)
 
     if "search" in request.POST:
-        start_date = request.POST["start-year"] + "-" + request.POST["start-month"] + "-" + request.POST["start-day"]
-        end_date = request.POST["end-year"] + "-" + request.POST["end-month"] + "-" + request.POST["end-day"]
+        start_date = (
+            request.POST["start-year"]
+            + "-"
+            + request.POST["start-month"]
+            + "-"
+            + request.POST["start-day"]
+        )
+        end_date = (
+            request.POST["end-year"]
+            + "-"
+            + request.POST["end-month"]
+            + "-"
+            + request.POST["end-day"]
+        )
         result = finder(start_date=start_date, end_date=end_date)
         if type(result) == str:
             render_dict["result"] = "Empty"

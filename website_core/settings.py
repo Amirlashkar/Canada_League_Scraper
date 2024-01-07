@@ -29,19 +29,7 @@ SECRET_KEY = os.getenv("BASKETBALL_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(int(os.getenv("BASKETBALL_DEBUG")))
 
-import pycurl
-from io import BytesIO
-
-# Determine Public IP address of EC2 instance
-buffer = BytesIO()
-c = pycurl.Curl()
-c.setopt(c.URL, "checkip.amazonaws.com")
-c.setopt(c.WRITEDATA, buffer)
-c.perform()
-c.close()
-ip_add = buffer.getvalue().decode("iso-8859-1").strip()
-
-ALLOWED_HOSTS = [ip_add, "127.0.0.1"]
+ALLOWED_HOSTS = ["localhost"]
 
 
 # Application definition
@@ -135,6 +123,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+# MEDIA_URL = "/media/"
+# MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
