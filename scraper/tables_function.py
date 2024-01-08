@@ -8,7 +8,7 @@ import pandas as pd
 pd.set_option("display.max_colwidth", None)
 from datetime import datetime
 from copy import deepcopy
-import re, ast, os
+import re, ast, os, difflib
 from constants import *
 
 
@@ -82,7 +82,7 @@ def provide_data(home: str, visitor: str, date: str) -> pd.DataFrame:
     return raw_data
 
 
-def initial_edit(df: pd.DataFrame) -> pd.DataFrame:
+def initial_edit(df: pd.DataFrame, HorV: str) -> pd.DataFrame:
     """
     this makes 4 other column for raw table which are player interfered and exact event occured
     for both side.
@@ -91,14 +91,26 @@ def initial_edit(df: pd.DataFrame) -> pd.DataFrame:
     """
 
     pattern = "([A-Z]+\W*[A-Z]+,[A-Z]+\W*[A-Z]+)"
+    side_plist, _ = list_players(df, 0, HorV)
+    op_plist, _ = list_players(df, 0, "Home" if HorV[0] == "V" else "Visitor")
     df[f"H-event"] = df[f"H-event"].fillna("No Event")
     df[f"V-event"] = df[f"V-event"].fillna("No Event")
     for index, row in df.iterrows():
         for side in ["H", "V"]:
+            compare_list = side_plist.copy() if HorV[0] == side else op_plist.copy()
             player = re.search(pattern, row[f"{side}-event"])
             if player:
                 player = player[0].strip()
-                df.loc[index, f"{side}_player"] = player
+                if player not in compare_list:
+                    found = difflib.get_close_matches(
+                        player, compare_list, n=1, cutoff=0.0
+                    )[0]
+                    if found:
+                        df.loc[index, f"{side}_player"] = found
+                    else:
+                        print(f"{player} not found !!!")
+                else:
+                    df.loc[index, f"{side}_player"] = player
             else:
                 df.loc[index, f"{side}_player"] = "No Player"
 
@@ -297,7 +309,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                 lineup_cached_pts = lineup_time_dict["ptscache"][-1]
                 lineup_cached_ptc = lineup_time_dict["ptccache"][-1]
                 if lineup_time_dict["timecache"][-1] == "not_changed":
-                    lineup_time_dict["seconds"] += 600
+                    lineup_time_dict["seconds"][-1] += 600
                     enter_score_index = quarter_indices[quarter - 1] + 1
                     enter_pts = int(
                         df.iloc[enter_score_index]["Score"].split("-")[pts_expression]
@@ -403,7 +415,13 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
             ptscache = time_dict["ptscache"][player_index]
             ptccache = time_dict["ptccache"][player_index]
             if "goes to the bench" in row[f"{HorV[0]}_exactevent"]:
-                in_lineup.remove(row[f"{HorV[0]}_player"])
+                # sometimes player name wasn't nither on starters nor players entered the game but he exits suddenly :|
+                try:
+                    in_lineup.remove(row[f"{HorV[0]}_player"])
+                except:
+                    print(
+                        f"{row[f'{HorV[0]}_player']} time analyze has a slight difference from reality due to invalid data !"
+                    )
                 if cached_time == "not_changed":
                     enter_time = datetime.strptime("10:00", "%M:%S")
                     enter_score_index = quarter_indices[quarter - 1] + 1
