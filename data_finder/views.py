@@ -34,7 +34,7 @@ def data_finder(request):
             + "-"
             + request.POST["end-day"]
         )
-        result = finder(start_date=start_date, end_date=end_date)
+        result = finder("Carleton", start_date=start_date, end_date=end_date)
         if type(result) == str:
             render_dict["result"] = "Empty"
         else:

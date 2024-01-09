@@ -52,9 +52,9 @@ function createDateDropdown(parentId, yearId, yearInputId, monthId, monthInputId
    
    // add dropdowns to parent element
    const parent = document.getElementById(parentId);
-   parent.appendChild(year);
    parent.appendChild(month);
    parent.appendChild(day);
+   parent.appendChild(year);
 }
 
 createDateDropdown('start-date', 'start-year', 'start-year-input', 

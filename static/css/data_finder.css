@@ -1,13 +1,89 @@
 .center {
-    justify-content: center;
-    text-align: center;
-    align-items: center;
+  justify-content: center;
+  text-align: center;
+  align-items: center;
 }
+
 .main-panel {
-    background-color: rgb(243, 243, 243);
-    border-radius: 10px;
-    box-shadow: 0px 0px 20px 3px rgb(0, 0, 0, 0.3);
-    font-family: "poppins";
-    margin-top: 350px;
-    padding: 10px;
+  background-color: #050505;
+  border-radius: 10px;
+  border: solid 1px #464646;
+  box-shadow: 0px 0px 20px 3px rgb(0, 0, 0, 0.3);
+  font-family: "poppins";
+  margin-top: 150px;
+  padding: 30px;
+  color: white;
+}
+
+.title {
+  justify-content: center;
+  color: white;
+  font-family: "Courier", sans-serif;
+  word-spacing: -10px;
+  margin-top: 25px;
+}
+
+.analyze-icon {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-inline: 5px;
+}
+
+.bring-center {
+  justify-content: center;
+}
+
+.to {
+  margin-inline: 5px;   
+  margin-block: auto;
+}
+
+select {
+  color: white;
+  background-color: black;
+  border-radius: 15px;
+  border: solid 1px #464646;
+  margin: 2px;
+  padding: 3px;
+  transition: 0.35s;
+}
+
+select:hover {
+  background-color: #434343;
+}
+
+.my-btn {
+  background-color: #050505;
+  color: white;
+  border: solid 1px #464646;
+  border-radius: 30px;
+  padding: 10px;
+  margin: 5px;
+  justify-content: center;
+  transition: 0.35s;
+}
+
+.my-btn-disabled {
+  background-color: #434343 !important;
+}
+
+.my-btn:hover {
+  background-color: #434343;  
+}
+
+.find-icon {
+  margin-inline: 5px;  
+}
+
+.find {
+  margin: 5px;  
+}
+
+.result {
+  transition: 0.35s;
+}
+
+.row-margin {
+  margin-top: 25px;
+  margin-bottom: 25px;
 }

@@ -1,0 +1,13 @@
+body {
+    background-image: url("/static/images/back_pattern.png");
+    background-repeat: repeat;
+    /* You can adjust other properties like background-size, background-position, etc. */
+}
+
+.title-h1{
+  font-size: 23px;
+  font-weight: 700;
+  font-family: "poppins";
+  padding: 2% 0% 0% 0%;
+}
+

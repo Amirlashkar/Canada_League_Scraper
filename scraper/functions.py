@@ -93,16 +93,16 @@ def check_inventory(home_team, visitor_team, date) -> bool:
 
 def finder(follow_up_team, start_date, end_date):
     inventory_df = pd.read_csv(inventory_path)
-    inventory_df["Date"] = pd.to_datetime(inventory_df["Date"])
+    inventory_df["Date"] = pd.to_datetime(inventory_df["Date"], format="%m_%d_%Y")
     start_date_obj = datetime.strptime(start_date, "%Y-%m-%d")
     end_date_obj = datetime.strptime(end_date, "%Y-%m-%d")
     filtered_df = inventory_df.loc[
         (
-            inventory_df["Home"] == follow_up_team
-            or inventory_df["Visitor"] == follow_up_team
+            (inventory_df["Home"] == follow_up_team)
+            | (inventory_df["Visitor"] == follow_up_team)
         )
-        and inventory_df["Date"] > start_date_obj
-        and inventory_df["Date"] <= end_date_obj
+        & (inventory_df["Date"] > start_date_obj)
+        & (inventory_df["Date"] <= end_date_obj)
     ]
 
     if filtered_df.empty:
@@ -120,7 +120,7 @@ def zipper(user_path, zip_name, result_df):
                 + "_"
                 + row["Visitor"]
                 + "_"
-                + row["Date"].strftime("%Y-%m-%d")
+                + row["Date"].strftime("%m_%d_%Y")
                 + ".csv"
             )
             file_path = os.path.join(os.getcwd(), "data", filename)
@@ -141,12 +141,12 @@ def make_swap_uppernames(ls):
     return formatted_players
 
 
-def players_list_and_starters(df:pd.DataFrame, quarter_index:int, HorV:str):
+def players_list_and_starters(df: pd.DataFrame, quarter_index: int, HorV: str):
     p_dict = ast.literal_eval(df.iloc[quarter_index][HorV])
     p_list = p_dict["starters"].copy()
     p_list.extend(p_dict["reserves"])
     p_list.remove("Team")
-    
+
     sts = p_dict["starters"].copy()
 
     p_list = make_swap_uppernames(p_list)
@@ -156,13 +156,27 @@ def players_list_and_starters(df:pd.DataFrame, quarter_index:int, HorV:str):
 
 
 def final_table_maker(data, HorV):
-
     player_event_df = data.copy()
-    
-    event_list = ['made layup','missed layup','Assist','Turnover','defensive rebound','enters the game'
-                  ,'goes to the bench','missed 3-pt. jump shot','Foul','Steal','made free throw',
-                  'missed free throw','made jump shot','made 3-pt. jump shot','missed jump shot','offensive rebound']
-    
+
+    event_list = [
+        "made layup",
+        "missed layup",
+        "Assist",
+        "Turnover",
+        "defensive rebound",
+        "enters the game",
+        "goes to the bench",
+        "missed 3-pt. jump shot",
+        "Foul",
+        "Steal",
+        "made free throw",
+        "missed free throw",
+        "made jump shot",
+        "made 3-pt. jump shot",
+        "missed jump shot",
+        "offensive rebound",
+    ]
+
     pattern = "([A-Z]+\W*[A-Z]+,[A-Z]+\W*[A-Z]+)"
     player_event_df["H-event"] = player_event_df["H-event"].fillna("No Event")
     player_event_df["V-event"] = player_event_df["V-event"].fillna("No Event")
@@ -172,14 +186,22 @@ def final_table_maker(data, HorV):
             if player:
                 player = player[0].strip()
                 player_event_df.loc[index, f"{side}_player"] = player
-            
+
             for event in event_list:
                 if event in row[f"{side}-event"]:
                     player_event_df.loc[index, f"{side}_exactevent"] = event
 
-    player_event_df[f"{HorV[0]}_player"] = player_event_df[f"{HorV[0]}_player"].fillna("No Player")
-    player_event_df[f"{HorV[0]}_player"] = player_event_df[f"{HorV[0]}_player"].fillna("No Player")
-    player_event_df[f"{HorV[0]}_exactevent"] = player_event_df[f"{HorV[0]}_exactevent"].fillna("No Event")
-    player_event_df[f"{HorV[0]}_exactevent"] = player_event_df[f"{HorV[0]}_exactevent"].fillna("No Event")
+    player_event_df[f"{HorV[0]}_player"] = player_event_df[f"{HorV[0]}_player"].fillna(
+        "No Player"
+    )
+    player_event_df[f"{HorV[0]}_player"] = player_event_df[f"{HorV[0]}_player"].fillna(
+        "No Player"
+    )
+    player_event_df[f"{HorV[0]}_exactevent"] = player_event_df[
+        f"{HorV[0]}_exactevent"
+    ].fillna("No Event")
+    player_event_df[f"{HorV[0]}_exactevent"] = player_event_df[
+        f"{HorV[0]}_exactevent"
+    ].fillna("No Event")
 
     pass

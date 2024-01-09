@@ -5,37 +5,60 @@
 
 <head>
     <link type="text/css" rel="stylesheet" href="{% static 'css/data_finder.css' %}"/>
-    <script type="text/javascript" src="{% static 'js/data_finder.js' %}"></script>
 </head>
 <body>
+    <div class="title col-md-4 offset-md-4 row">
+      <img class="analyze-icon" src="{% static 'icons/analyze.png' %}" width="32" height="32">
+      <h1>
+        Analytics Finder
+      </h1>
+    </div>
     <form action="" method="post">
         {% csrf_token %}
-        <div class="col-md-6 offset-md-3 center main-panel">
+        <div class="col-md-4 offset-md-4 center main-panel">
             <p>
-                Find Carleton data between 
-                <span>
-                    <input type="hidden" id="start-year-input" name="start-year" value="">
-                    <input type="hidden" id="start-month-input" name="start-month" value="">
-                    <input type="hidden" id="start-day-input" name="start-day" value="">
-                    <div class="date-dropdown" id="start-date"></div>
-                </span>
-                &
-                <span>
-                    <input type="hidden" id="end-year-input" name="end-year" value="">
-                    <input type="hidden" id="end-month-input" name="end-month" value="">
-                    <input type="hidden" id="end-day-input" name="end-day" value="">
-                    <div class="date-dropdown" id="end-date"></div>
-                </span>
+                <span>Find Carleton data since</span>
+                <div class="row bring-center row-margin">
+                    <span>
+                        <input type="hidden" id="start-year-input" name="start-year" value="">
+                        <input type="hidden" id="start-month-input" name="start-month" value="">
+                        <input type="hidden" id="start-day-input" name="start-day" value="">
+                        <div class="date-dropdown" id="start-date"></div>
+                    </span>
+                    <span class="to">to</span>
+                    <span>
+                        <input type="hidden" id="end-year-input" name="end-year" value="">
+                        <input type="hidden" id="end-month-input" name="end-month" value="">
+                        <input type="hidden" id="end-day-input" name="end-day" value="">
+                        <div class="date-dropdown" id="end-date"></div>
+                    </span>
+                </div>
             </p>
-            <button class="btn btn-success" name="search">Search</button>
-            {% if result == 'Empty' %}
-            <p>There is no data in such date</p>
-            {% elif file_ready %}
-            <p>Tracked data is ready to download</p>
-            <button class="btn btn-success" name="download" style="background-color: black; border-color: black;">Download</button>
-            {% endif %}
+            <div class="row bring-center">
+                <button class="row my-btn bring-cneter" name="search">
+                    <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
+                    <span class="find">
+                      Find
+                    </span>
+                </button>
+                {% if file_ready %}
+                <button class="row my-btn bring-cneter" name="download">
+                    <img class="find-icon" src="{% static 'icons/download.png' %}" width="32" height="32">
+                    <span class="find">
+                      Download
+                    </span>
+                </button>
+                {% else %}
+                <button class="row my-btn my-btn-disabled bring-cneter" disabled>
+                    <img class="find-icon" src="{% static 'icons/download.png' %}" width="32" height="32">
+                    <span class="find">
+                      Download
+                    </span>
+                </button>
+                {% endif %}
+            </div>
         </div>
     </form>
-
+    <script type="text/javascript" src="{% static 'js/data_finder.js' %}"></script>
 </body>
 {% endblock %}
