@@ -1,0 +1,64 @@
+{% extends './base.html' %}
+{% block title %} Analytics Finder {% endblock %}
+{% block content %}
+{% load static %}
+
+<head>
+  <link type="text/css" rel="stylesheet" href="{% static 'css/analytics.css' %}"/>
+</head>
+<body>
+  <div class="title col-md-4 offset-md-4 row">
+    <img class="analyze-icon" src="{% static 'icons/analyze.png' %}" width="32" height="32">
+    <h1>
+      Analytics Finder
+    </h1>
+  </div>
+  <form action="" method="post">
+    {% csrf_token %}
+    <div class="col-md-4 offset-md-4 center main-panel">
+      <p>
+        <h4>Find Carleton data since</h4>
+        <div class="row bring-center row-margin">
+          <span>
+            <input type="hidden" id="start-year-input" name="start-year" value="">
+            <input type="hidden" id="start-month-input" name="start-month" value="">
+            <input type="hidden" id="start-day-input" name="start-day" value="">
+            <div class="date-dropdown" id="start-date"></div>
+          </span>
+          <span class="to">to</span>
+          <span>
+            <input type="hidden" id="end-year-input" name="end-year" value="">
+            <input type="hidden" id="end-month-input" name="end-month" value="">
+            <input type="hidden" id="end-day-input" name="end-day" value="">
+            <div class="date-dropdown" id="end-date"></div>
+          </span>
+        </div>
+      </p>
+      <div class="row bring-center">
+        <button class="row my-btn bring-cneter" name="find">
+          <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
+          <span class="find">
+            Find
+          </span>
+        </button>
+        {% if file_ready %}
+        <button class="row my-btn bring-cneter" name="download">
+          <img class="find-icon" src="{% static 'icons/download.png' %}" width="32" height="32">
+          <span class="find">
+            Download
+          </span>
+        </button>
+        {% else %}
+        <button class="row my-btn my-btn-disabled bring-cneter" disabled>
+          <img class="find-icon" src="{% static 'icons/download.png' %}" width="32" height="32">
+          <span class="find">
+            Download
+          </span>
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </form>
+  <script type="text/javascript" src="{% static 'js/analytics.js' %}"></script>
+</body>
+{% endblock %}

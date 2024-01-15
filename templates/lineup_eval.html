@@ -1,0 +1,114 @@
+{% extends './base.html' %}
+{% block title %} Lineup Evaluation {% endblock %}
+{% block content %}
+{% load static %}
+
+<head>
+  <link type="text/css" rel="stylesheet" href="{% static 'css/analytics.css' %}" />
+</head>
+
+<body>
+  <div class="title col-md-4 offset-md-4 row">
+    <img class="analyze-icon" src="{% static 'icons/lineup.png' %}" width="32" height="32">
+    <h1>
+      Lineup Evaluation
+    </h1>
+  </div>
+  <form action="" method="post">
+    {% csrf_token %}
+    <div class="col-md-6 offset-md-3 center main-panel">
+      {% if phase == 'team_selection' %}
+      <h4 class="row bring-center">Specify match info</h4>
+      <hr class="line">
+      <div class="row bring-center">
+        <div class="col-md-4">
+          <p>Home</p>
+          <select name="home-team">
+            {% for team in home_teams %}
+            <option value="{{team}}">{{team}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <p>Visitor</p>
+          <select name="visitor-team">
+            {% for team in visitor_teams %}
+            <option value="{{team}}">{{team}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <p>Date</p>
+          <span>
+            <input type="hidden" id="match-year-input" name="match-year" value="">
+            <input type="hidden" id="match-month-input" name="match-month" value="">
+            <input type="hidden" id="match-day-input" name="match-day" value="">
+            <div class="date-dropdown" id="match-date"></div>
+          </span>
+        </div>
+      </div>
+      <div class="row bring-center">
+        <button class="row my-btn bring-center line-find" name="find">
+          <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
+          <span class="find">
+            Find
+          </span>
+        </button>
+      </div>
+      {% if result == 'Empty' %}
+      <div class="row bring-center">
+        <p class="line-find">
+          No such record
+        </p>
+      </div>
+      {% endif %}
+      {% else %}
+      <h4 class="row bring-center">Specify players lineup</h4>
+      <hr class="line">
+      <div class="row bring-center">
+        <select name="p1">
+          {% for p in players %}
+          <option value="{{p}}">{{p}}</option>
+          {% endfor %}
+        </select>
+        <select name="p2">
+          {% for p in players %}
+          <option value="{{p}}">{{p}}</option>
+          {% endfor %}
+        </select>
+        <select name="p3">
+          {% for p in players %}
+          <option value="{{p}}">{{p}}</option>
+          {% endfor %}
+        </select>
+        <select name="p4">
+          {% for p in players %}
+          <option value="{{p}}">{{p}}</option>
+          {% endfor %}
+        </select>
+        <select name="p5">
+          {% for p in players %}
+          <option value="{{p}}">{{p}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="row bring-center">
+        <button class="row my-btn bring-center line-find" name="eval">
+          <img class="find-icon" src="{% static 'icons/eval.png' %}" width="32" height="32">
+          <span class="find">
+            Evaluate
+          </span>
+        </button>
+        <button class="row my-btn bring-center line-find" name="back">
+          <img class="find-icon" src="{% static 'icons/back.png' %}" width="32" height="32">
+          <span class="find">
+            Back
+          </span>
+        </button>
+      </div>
+      {% endif %}
+    </div>
+  </form>
+  <script type="text/javascript" src="{% static 'js/lineup_eval.js' %}"></script>
+</body>
+{% endblock %}

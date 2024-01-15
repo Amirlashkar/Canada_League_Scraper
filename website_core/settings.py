@@ -11,10 +11,13 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+from django.core.checks import Debug
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+dotenv_path = os.path.join(os.getcwd(), ".env")
+
+load_dotenv(dotenv_path)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,10 +27,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("BASKETBALL_SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(int(os.getenv("BASKETBALL_DEBUG")))
+DEBUG = bool(int(os.getenv("DEBUG")))
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "localhost"]
 
@@ -52,6 +55,20 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+# These lines are gonna avoid admin page to work properly when on 0.0.0.0 not 127.0.0.1
+# --------------------
+SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+# As a string
+SESSION_COOKIE_SAMESITE = "None" if DEBUG == False else "Lax"
+SESSION_COOKIE_SECURE = False if DEBUG == True else True
+# --------------------
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.aimental.ca",
+    "http://0.0.0.0",
 ]
 
 ROOT_URLCONF = "website_core.urls"

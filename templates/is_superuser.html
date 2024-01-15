@@ -2,22 +2,22 @@
 {% block title %} Superuser Confirmation {% endblock %}
 {% block content %}
 <body>
-    <h1>
-        <p>
-            Are you a superuser? <span>{{is_superuser}}</span>
-            {% if is_superuser == 'False' %}
-            <p>
-                If you think you are one, click this: <span><a href="admin">admin login</a></span>
-            </p>
-            {% else %}
-            <p>
-                Visit our bascketball league <a href="data_finder">Data Finder</a>
-            </p>
-            <p>
-                <a href="admin/logout">Logout</a>
-            </p>
-            {% endif %}
-        </p>
-    </h1>
+  <h1>
+    <p>
+      Are you a superuser? <span>{{is_superuser}}</span>
+      {% if is_superuser == 'False' %}
+      <p>
+        If you think you are one, click this: <span><a href="admin">admin login</a></span>
+      </p>
+      {% else %}
+      <p>
+        Visit our basketball league <a href="analytics">Analitycs Finder</a> or <a href="lineup_eval">Lineup Evaluator</a>
+      </p>
+      <p>
+        <a href="admin/logout">Logout</a>
+      </p>
+      {% endif %}
+    </p>
+  </h1>
 </body>
 {% endblock %}

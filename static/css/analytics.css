@@ -29,12 +29,28 @@
   margin-inline: 5px;
 }
 
+hr {
+  display: block;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  margin-left: auto;
+  margin-right: auto;
+  border-style: inset;
+  border-width: 1px;
+}
+
+.line {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  border-color: #464646;
+}
+
 .bring-center {
   justify-content: center;
 }
 
 .to {
-  margin-inline: 5px;   
+  margin-inline: 5px;
   margin-block: auto;
 }
 
@@ -68,15 +84,19 @@ select:hover {
 }
 
 .my-btn:hover {
-  background-color: #434343;  
+  background-color: #434343;
+}
+
+.line-find {
+  margin-top: 30px;
 }
 
 .find-icon {
-  margin-inline: 5px;  
+  margin-inline: 5px;
 }
 
 .find {
-  margin: 5px;  
+  margin: 5px;
 }
 
 .result {

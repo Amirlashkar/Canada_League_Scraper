@@ -3,5 +3,6 @@ from data_finder import views
 
 urlpatterns = [
     path("", views.is_superuser),
-    path("data_finder/", views.data_finder),
+    path("analytics/", views.analytics),
+    path("lineup_eval/", views.lineup_eval),
 ]
