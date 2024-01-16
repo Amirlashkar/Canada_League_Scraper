@@ -1,0 +1,12 @@
+/env
+/data
+/tables
+/users
+/static/admin
+db.sqlite3
+__pycache__/
+**/.env**
+**/.DS_Store**
+**/.mypy_cache**
+**/test.py**
+**/config.yml**

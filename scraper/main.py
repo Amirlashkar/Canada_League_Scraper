@@ -13,13 +13,16 @@ import time
 from datetime import datetime
 from functions import *
 
-# loading config file
-with open("scraper/config.yml", "rb") as f:
-    cfg = yaml.load(f, yaml.Loader)
-    cfg = cfg["main"]
+driver_options = webdriver.ChromeOptions()
+driver_options.add_argument("--headless")
+driver_options.add_argument("--no-sandbox")  # This make Chromium reachable
+driver_options.add_argument("--disable-dev-shm-usage")  # Overcomes limited resource problems
+driver_options.add_argument('start-maximized') 
+driver_options.add_argument('disable-infobars')
+driver_options.add_argument("--disable-extensions")
 
 season = "2023-24"
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=driver_options)
 driver.get(f"https://universitysport.prestosports.com/sports/mbkb/{season}/schedule")
 
 driver.maximize_window()
