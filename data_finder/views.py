@@ -8,6 +8,10 @@ import pandas as pd
 import numpy as np
 
 
+tables_path = os.path.join(os.getcwd(), "tables")
+inventory_path = os.path.join(os.getcwd(), "data", "inventory.csv")
+inventory_csv = pd.read_csv(inventory_path)
+
 def is_superuser(request):
     return render(
         request, "is_superuser.html", {
@@ -17,34 +21,28 @@ def is_superuser(request):
 
 def analytics(request):
     render_dict = {}
+    render_dict["home_teams"] = np.unique(inventory_csv["Home"].to_list())
+    render_dict["visitor_teams"] = np.unique(inventory_csv["Visitor"].to_list())
     print(f"USER: {request.user.username}")
     user_path = os.path.join(os.getcwd(), "users", request.user.username)
     if not os.path.exists(user_path):
         os.makedirs(user_path)
 
     if "find" in request.POST:
-        start_date = (
-            request.POST["start-year"]
-            + "-"
-            + request.POST["start-month"]
-            + "-"
-            + request.POST["start-day"]
-        )
-        end_date = (
-            request.POST["end-year"]
-            + "-"
-            + request.POST["end-month"]
-            + "-"
-            + request.POST["end-day"]
-        )
-        result = finder("Carleton", start_date=start_date, end_date=end_date)
-        if type(result) == str:
-            render_dict["result"] = "Empty"
-        else:
-            zip_name = f"{slugify(start_date)}-{end_date}|{int(time.time())}.zip"
-            saving_path = zipper(user_path, zip_name, result)
+        month = int(request.POST['match-month'])
+        day = int(request.POST['match-day'])
+        year = request.POST['match-year']
+        match_date = f"{month:02d}" + "_" + f"{day:02d}" + "_" + year
+        home_team = request.POST["home-team"]
+        visitor_team = request.POST["visitor-team"]
+        match_tables_path = os.path.join(os.getcwd(), "tables", home_team, visitor_team, match_date)
+        
+        table_existance = find_final_tables(home_team, visitor_team, match_date)
+        if table_existance != "Empty":
+            zip_name = f"{slugify(home_team)}V{slugify(visitor_team)}On{slugify(match_date)}_{int(time.time())}.zip"
+            saving_path = zipper(user_path, zip_name, match_tables_path)
             request.session["file_path"] = saving_path
-            render_dict["file_ready"] = "1"
+            render_dict["file_ready"] = True
     elif "download" in request.POST:
         response = FileResponse(open(request.session["file_path"], "rb"))
         return response
@@ -53,8 +51,6 @@ def analytics(request):
 
 
 def lineup_eval(request):
-    inventory_path = os.path.join(os.getcwd(), "data", "inventory.csv")
-    inventory_csv = pd.read_csv(inventory_path)
     render_dict = {"phase": ""}
     render_dict["home_teams"] = np.unique(inventory_csv["Home"].to_list())
     render_dict["visitor_teams"] = np.unique(inventory_csv["Visitor"].to_list())
@@ -98,7 +94,7 @@ def lineup_eval(request):
             home_team = request.session["home_team"]
             visitor_team = request.session["visitor_team"]
             match_date = request.session["match_date"]
-            lineup_table_path = os.path.join(os.getcwd(), "tables", home_team, visitor_team, match_date, "LFinalTable.csv")
+            lineup_table_path = os.path.join(tables_path, home_team, visitor_team, match_date, "LFinalTable.csv")
             lineup_table = pd.read_csv(lineup_table_path)
 
             chosen_players = []

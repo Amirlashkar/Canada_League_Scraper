@@ -15,50 +15,56 @@
   </div>
   <form action="" method="post">
     {% csrf_token %}
-    <div class="col-md-4 offset-md-4 center main-panel">
-      <p>
-        <h4>Find Carleton data since</h4>
-        <div class="row bring-center row-margin">
+    <div class="col-md-6 offset-md-3 center main-panel">
+      <h4>Find Carleton data since</h4>
+      <hr class="line">
+      <div class="row bring-center">
+        <div class="col-md-4">
+          <p>Home</p>
+          <select name="home-team">
+            {% for team in home_teams %}
+            <option value="{{team}}">{{team}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <p>Visitor</p>
+          <select name="visitor-team">
+            {% for team in visitor_teams %}
+            <option value="{{team}}">{{team}}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <p>Date</p>
           <span>
-            <input type="hidden" id="start-year-input" name="start-year" value="">
-            <input type="hidden" id="start-month-input" name="start-month" value="">
-            <input type="hidden" id="start-day-input" name="start-day" value="">
-            <div class="date-dropdown" id="start-date"></div>
-          </span>
-          <span class="to">to</span>
-          <span>
-            <input type="hidden" id="end-year-input" name="end-year" value="">
-            <input type="hidden" id="end-month-input" name="end-month" value="">
-            <input type="hidden" id="end-day-input" name="end-day" value="">
-            <div class="date-dropdown" id="end-date"></div>
+            <input type="hidden" id="match-year-input" name="match-year" value="">
+            <input type="hidden" id="match-month-input" name="match-month" value="">
+            <input type="hidden" id="match-day-input" name="match-day" value="">
+            <div class="date-dropdown" id="match-date"></div>
           </span>
         </div>
-      </p>
+      </div>
       <div class="row bring-center">
-        <button class="row my-btn bring-cneter" name="find">
+        <button class="row my-btn bring-center line-find" name="find">
           <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
           <span class="find">
             Find
           </span>
         </button>
         {% if file_ready %}
-        <button class="row my-btn bring-cneter" name="download">
-          <img class="find-icon" src="{% static 'icons/download.png' %}" width="32" height="32">
-          <span class="find">
-            Download
-          </span>
-        </button>
+        <button class="row my-btn bring-cneter line-find" name="download">
         {% else %}
-        <button class="row my-btn my-btn-disabled bring-cneter" disabled>
+        <button class="row my-btn my-btn-disabled bring-cneter line-find" disabled>
+        {% endif %}
           <img class="find-icon" src="{% static 'icons/download.png' %}" width="32" height="32">
           <span class="find">
             Download
           </span>
         </button>
-        {% endif %}
       </div>
     </div>
   </form>
-  <script type="text/javascript" src="{% static 'js/analytics.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/lineup_eval.js' %}"></script>
 </body>
 {% endblock %}

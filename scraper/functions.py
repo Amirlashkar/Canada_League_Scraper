@@ -134,18 +134,10 @@ def find_final_tables(Home, Visitor, Date):
         return "There is such data"
 
 
-def zipper(user_path, zip_name, result_df):
+def zipper(user_path, zip_name, path_to_zip):
     saving_path = os.path.join(user_path, zip_name)
     with ZipFile(saving_path, "w", compression=ZIP_DEFLATED, compresslevel=9) as zf:
-        for index, row in result_df.iterrows():
-            filename = (
-                row["Home"]
-                + "_"
-                + row["Visitor"]
-                + "_"
-                + row["Date"].strftime("%m_%d_%Y")
-                + ".csv"
-            )
-            file_path = os.path.join(os.getcwd(), "data", filename)
-            zf.write(file_path, arcname=filename)
+        for file in os.listdir(path_to_zip):
+            file_path = os.path.join(path_to_zip, file)
+            zf.write(file_path, arcname=file)
     return saving_path
