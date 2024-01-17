@@ -14,7 +14,10 @@
         Visit our basketball league <a href="analytics">Analitycs Finder</a> or <a href="lineup_eval">Lineup Evaluator</a>
       </p>
       <p>
-        <a href="admin/logout">Logout</a>
+      <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <input type="submit" value="Logout">
+      </form>
       </p>
       {% endif %}
     </p>
