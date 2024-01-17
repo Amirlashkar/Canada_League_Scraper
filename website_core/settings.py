@@ -61,13 +61,13 @@ MIDDLEWARE = [
 # --------------------
 SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
 # As a string
-SESSION_COOKIE_SAMESITE = "None" if DEBUG == False else "Lax"
-SESSION_COOKIE_SECURE = False if DEBUG == True else True
+# needs to be uncomment when site is on HTTPS protocole
+# SESSION_COOKIE_SAMESITE = "None" if DEBUG == False else "Lax"
+# SESSION_COOKIE_SECURE = False if DEBUG == True else True
 # --------------------
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://*.aimental.ca",
     "http://0.0.0.0",
 ]
 
