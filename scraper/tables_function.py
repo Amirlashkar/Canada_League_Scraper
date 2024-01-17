@@ -9,7 +9,7 @@ pd.set_option("display.max_colwidth", None)
 from datetime import datetime
 from copy import deepcopy
 import re, ast, os, difflib
-from .constants import *
+from constants import *
 
 
 def format_names(ls) -> list:
