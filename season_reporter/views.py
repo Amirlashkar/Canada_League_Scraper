@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from scraper.tables_function import data_showoff
 import pandas as pd
 import numpy as np
@@ -7,6 +7,10 @@ import os, sys
 reports_path = os.path.join(os.getcwd(), "reports")
 
 def report_reder(request):
+    # the user who is not an admin accessed analitycs url would be redirected to root url
+    if not request.user.is_superuser:
+        return redirect("is_superuser")
+
     render_dict = {}
     teams = os.listdir(reports_path)
     if ".DS_Store" in teams:

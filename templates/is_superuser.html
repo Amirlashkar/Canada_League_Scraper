@@ -11,7 +11,9 @@
       </p>
       {% else %}
       <p>
-        Visit our basketball league <a href="analytics">Analitycs Finder</a> or <a href="lineup_eval">Lineup Evaluator</a>
+      Visit our basketball league <a href="{% url 'analytics' %}">Analitycs Finder</a> or 
+      <a href="{% url 'lineup_eval' %}">Lineup Evaluator</a> or 
+      <a href="{% url 'season' %}">Season Reporter</a>
       </p>
       <p>
       <form action="{% url 'logout' %}" method="post">

@@ -153,7 +153,9 @@ Analytics Finder
           {% endfor %}
         </tbody>
       </table>
+      {% if switch == 'lineups' %}
       <h3 class="row-margin"><a href="{% url 'lineup_eval' %}">Use Lineup Evaluation App</a></h3>
+      {% endif %}
     </div>
     {% endif %}
   </form>
