@@ -1,5 +1,4 @@
 from django.shortcuts import redirect, render
-from sqlalchemy import except_
 from scraper.functions import *
 from scraper.tables_function import list_players, data_showoff
 import pandas as pd
