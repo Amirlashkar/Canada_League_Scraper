@@ -15,6 +15,11 @@
   color: white;
 }
 
+.result-panel {
+  margin-top: 5% !important;
+  font-size: 65% !important;
+}
+
 .title {
   justify-content: center;
   color: white;
@@ -106,4 +111,18 @@ select:hover {
 .row-margin {
   margin-top: 25px;
   margin-bottom: 25px;
+}
+
+.table-width {
+  width: 100%;
+}
+
+.table-column {
+  padding: 18px;
+  border: solid 1px #464646;
+}
+
+.table-body {
+  overflow-x: auto;
+  overflow-y: auto;
 }

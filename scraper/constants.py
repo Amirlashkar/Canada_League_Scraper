@@ -11,6 +11,7 @@ event_list = [
     "missed 3-pt. jump shot",
     "Foul",
     "Steal",
+    "Block",
     "made free throw",
     "missed free throw",
     "made jump shot",
@@ -28,15 +29,17 @@ pos_contrib = [
     "made jump shot",
     "made layup",
     "offensive rebound",
+    "missed 3-pt. jump shot",
+    "missed free throw",
+    "missed jump shot",
+    "missed layup",
 ]
 
 # needed for def possession calculation
 neg_contrib = [
     "Turnover",
-    "missed 3-pt. jump shot",
-    "missed free throw",
-    "missed jump shot",
-    "missed layup",
+    "Steal",
+    "Block",
 ]
 
 # for final tables

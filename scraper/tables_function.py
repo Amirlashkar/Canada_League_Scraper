@@ -8,14 +8,18 @@ import pandas as pd
 pd.set_option("display.max_colwidth", None)
 from datetime import datetime
 from copy import deepcopy
-import re, ast, os, difflib
-from .constants import *
+import re, ast, os, sys, difflib
+
+addition_path = os.path.join(os.getcwd(), "scraper")
+sys.path.append(addition_path)
+from constants import *
 
 
 def format_names(ls) -> list:
     """
     gets player names ls and capitalize its names then swap first and lastname
     as needed to be with respect to scraped table.
+
     ls: list of players full name
     """
 
@@ -34,6 +38,7 @@ def format_names(ls) -> list:
 def list_players(df: pd.DataFrame, quarter_index: int, HorV: str) -> tuple:
     """
     extract starter lineup from scraped table and implement some functions on it.
+
     df: scraped table for a match
     quarter_index: row index of an specific quarter which we are extracting lineup from it
     HorV: either you are inspecting Home or Visitor team players
@@ -66,9 +71,51 @@ def cal_eff(offense: int, defense: int, time: int) -> float:
     return float(eff)
 
 
+def cal_rtg(points:int, possession:int) -> float:
+    """
+    calculates rating based on inputs.
+
+    points: may be PTScored or PTConceded
+    offense: number of offensive acts
+    defense: number of defensive acts
+    time: in-game time for a player that we are calculating his effectiveness
+    """
+    rtg = (points / possession) * 100
+    
+    return rtg
+
+
+def data_showoff(data:np.ndarray) -> list:
+    """
+    takes a sequence of data and converts its floats in shape of
+    two digits after floating-point.
+
+    data: sequence of data with or without other types of variables
+    than float
+    """
+    _data = []
+    for elem in data:
+        ls = []
+        for e in elem:
+            try:
+                e = float(e)
+            except:
+                pass
+
+            if isinstance(e, float):
+                ls.append("{:.2f}".format(e))
+            else:
+                ls.append(e)
+
+        _data.append(ls)
+    
+    return _data
+
+
 def provide_data(home: str, visitor: str, date: str) -> pd.DataFrame:
     """
     returns scraped table by specific home and visitor team on a particular date of match
+
     home: home team name
     visitor: visitor team name
     date: date of match
@@ -86,6 +133,7 @@ def initial_edit(df: pd.DataFrame, HorV: str) -> pd.DataFrame:
     """
     this makes 4 other column for raw table which are player interfered and exact event occured
     for both side.
+
     df: raw table
     HorV: team side
     """
@@ -153,11 +201,13 @@ def create_eff_df(cusMin_df, eff_columns, custom_minute=1):
 def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
     """
     This is the main part which creates time and events tables drived from raw table
+
     df: raw table
     """
 
     # ------------------------------------------------------------------------------------------------------------------------------------------------------------
     # dependencies
+    op_HorV = "Home" if HorV == "Visitor" else "Visitor"
     players_list, _ = list_players(df, 0, HorV)
     pts_expression = 0 if HorV[0] == "H" else 1
     ptc_expression = 0 if HorV[0] == "V" else 1
@@ -203,7 +253,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
     in_lineup = []
 
     not_changed_list = ["not_changed" for n in range(len(players_list))]
-    event_num_dict = {k: [] for k in ["player"] + event_list}
+    event_num_dict = {k: [] for k in ["player"] + event_list + ["off_poss", "def_poss"]}
     event_num_dict5min = {
         k: []
         for k in ["player"]
@@ -402,6 +452,23 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                 else:
                     lineup_event_dict[key].append(0)
             continue
+        
+        # counting off possession of opponent team which equals to def posession of selected team
+        if row[f"{op_HorV[0]}_player"] not in ("No Player", np.nan, "nan") and row[f"{op_HorV[0]}_exactevent"] not in ("No Event", np.nan, "nan") and not pd.isna(row[f"{op_HorV[0]}_player"]) and not pd.isna(row[f"{op_HorV[0]}_exactevent"]):
+            exactevent = row[f"{op_HorV[0]}_exactevent"]
+
+            ## possession counting for players
+            if exactevent in pos_contrib:
+                for p in in_lineup:
+                    if p not in event_num_dict["player"]:
+                        event_num_dict["player"].append(p)
+                        for key in event_num_dict:
+                            if key != "player":
+                                event_num_dict[key].append(0)
+
+                    p_ind = event_num_dict["player"].index(p)
+                    event_num_dict["def_poss"][p_ind] += 1
+
         # -------------------------------------------
         # iterating rows calculation
         if (
@@ -545,6 +612,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
             # -------------------------------------------
             # ------------------------------------------------------------------------------------------------------------------------------------------------------------
             ## filling event_num_dict for meaesuring how many times each event occured
+            exactevent = row[f"{HorV[0]}_exactevent"]
             if row[f"{HorV[0]}_player"] not in event_num_dict["player"]:
                 event_num_dict["player"].append(row[f"{HorV[0]}_player"])
                 for key in event_num_dict:
@@ -552,7 +620,19 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                         event_num_dict[key].append(0)
 
             player_index = event_num_dict["player"].index(row[f"{HorV[0]}_player"])
-            event_num_dict[row[f"{HorV[0]}_exactevent"]][player_index] += 1
+            event_num_dict[exactevent][player_index] += 1
+
+            ## possession counting
+            if exactevent in pos_contrib:
+                for p in in_lineup:
+                    if p not in event_num_dict["player"]:
+                        event_num_dict["player"].append(p)
+                        for key in event_num_dict:
+                            if key != "player":
+                                event_num_dict[key].append(0)
+
+                    p_ind = event_num_dict["player"].index(p)
+                    event_num_dict["off_poss"][p_ind] += 1
 
             if cur_time < threshold_time and quarter in (2, 4):
                 if row[f"{HorV[0]}_player"] not in event_num_dict5min["player"]:
@@ -718,8 +798,8 @@ def create_pfinal_df(
             time_score_df[("player", "player")] == row["player"]
         ][("total", "seconds")]
         time = seconds.iloc[0]
-        global_off_possession = row[pos_contrib].sum()
-        global_def_possession = row[neg_contrib].sum()
+        global_off_possession = row["off_poss"]
+        global_def_possession = row["def_poss"]
         global_efficiency = cal_eff(global_off_possession, global_def_possession, time)
 
         if row["player"] in events_df5min["player", "player"].tolist():
@@ -747,26 +827,16 @@ def create_pfinal_df(
 
         minutes = seconds / 60
         minutes = "{:.2f}".format(minutes.to_list()[0])
-        hv_df = df.loc[df[f"{HorV[0]}_player"] == row["player"]].iloc[1]
-        if pd.isna(hv_df["Home"]) == False:
-            hv = "Home"
-        else:
-            hv = "Visitor"
-
-        opponent_df = df.loc[pd.isna(df[hv]) == True]
+        opponent_df = df.loc[pd.isna(df[HorV]) == True]
         opponent = (
             opponent_df.iloc[1]["Home"]
-            if hv == "Visitor"
+            if HorV == "Visitor"
             else opponent_df.iloc[1]["Visitor"]
         )
 
         try:
-            off_rtg = (100 * points_scored) / (
-                global_off_possession + global_def_possession
-            )
-            def_rtg = (100 * points_conceded) / (
-                global_off_possession + global_def_possession
-            )
+            off_rtg = cal_rtg(points_scored, global_off_possession)
+            def_rtg = cal_rtg(points_conceded, global_def_possession)
         except ZeroDivisionError:
             off_rtg = 0
             def_rtg = 0
@@ -789,7 +859,7 @@ def create_pfinal_df(
             "quarter2 last 5min efficiency": [quarter2_5min_eff],
             "quarter4 last 5min efficiency": [quarter4_5min_eff],
             "minutes": minutes,
-            "home/visitor": hv,
+            "home/visitor": HorV,
             "opponent": opponent,
         }
 
@@ -809,10 +879,11 @@ def create_lfinal_df(
     lineup_time_score_df: pd.DataFrame,
     lineup_event_df: pd.DataFrame,
 ) -> pd.DataFrame:
-    if "Player Name" in final_columns:
-        final_columns.remove("Player Name")
+    lineup_final_columns = final_columns.copy()
+    if "Player Name" in lineup_final_columns:
+        lineup_final_columns.remove("Player Name")
 
-    lineup_final_columns = ["Lineup"].extend(final_columns)
+    lineup_final_columns = ["Lineup"].extend(lineup_final_columns)
     lineup_final_table = pd.DataFrame(columns=[lineup_final_columns])
     for index, row in lineup_event_df.iterrows():
         points_scored = float(

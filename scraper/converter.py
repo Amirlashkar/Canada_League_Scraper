@@ -3,7 +3,8 @@ import os
 
 
 class Converter:
-    def __init__(self):
+
+    def __init__(self) -> None:
         self.data_path = os.path.join(os.getcwd(), "data")
         self.tables_path = os.path.join(os.getcwd(), "tables")
         self.custom_min = 1

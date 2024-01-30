@@ -17,97 +17,138 @@
   <form action="" method="post">
     {% csrf_token %}
     <div class="col-md-6 offset-md-3 center main-panel">
-      {% if phase == 'team_selection' %}
       <h4 class="row bring-center">Specify match info</h4>
       <hr class="line">
       <div class="row bring-center">
-        <div class="col-md-4">
+        <div class="col-md-6">
           <p>Home</p>
+          {% if reset_available %}
+          <label class="bring-center">
+            {{home}}
+          </label>
+          {% else %}
           <select name="home-team">
             {% for team in home_teams %}
             <option value="{{team}}">{{team}}</option>
             {% endfor %}
           </select>
+          {% endif %}
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
           <p>Visitor</p>
+          {% if reset_available %}
+          <label class="bring-center">
+            {{visitor}}
+          </label>
+          {% else %}
           <select name="visitor-team">
             {% for team in visitor_teams %}
             <option value="{{team}}">{{team}}</option>
             {% endfor %}
           </select>
-        </div>
-        <div class="col-md-4">
-          <p>Date</p>
-          <span>
-            <input type="hidden" id="match-year-input" name="match-year" value="">
-            <input type="hidden" id="match-month-input" name="match-month" value="">
-            <input type="hidden" id="match-day-input" name="match-day" value="">
-            <div class="date-dropdown" id="match-date"></div>
-          </span>
+          {% endif %}
         </div>
       </div>
+      {% if dates %}
       <div class="row bring-center">
-        <button class="row my-btn bring-center line-find" name="find">
+        <div class="col-md-6">
+          <p>Dates</p>
+          <select name="date">
+            {% for date in dates %}
+            <option value="{{date}}">{{date}}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      {% elif selected_date %}
+      <div class="row bring-center">
+        <div class="col-md-6">
+          <p>Date</p>
+          <label class="bring-center">
+            {{selected_date}}
+          </label>
+        </div>
+      </div>
+      {% elif no_dates %}
+      <div class="row bring-center row-margin">
+        <label>
+          No such match found on database
+        </label>
+      </div>
+      {% endif %}
+      {% if players %}
+      <div class="row bring-center row-margin">
+        <div class="col-md-12">
+          <p>Lineup</p>
+          {% for num in "12345"|make_list %}
+          <select name="p{{num}}">
+            {% for p in players %}
+            <option value="{{p}}">{{p}}</option>
+            {% endfor %}
+          </select>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      <div class="row bring-center">
+        {% if dates %}
+        <button class="row my-btn bring-center line-find" name="submit-match">
+          <img class="find-icon" src="{% static 'icons/submit.png' %}" width="32" height="32">
+          <span class="find">
+            Submit Match
+          </span>
+        </button>
+        {% elif players %}
+        <button class="row my-btn bring-center line-find" name="submit-lineup">
+          <img class="find-icon" src="{% static 'icons/submit.png' %}" width="32" height="32">
+          <span class="find">
+            Submit Lineup
+          </span>
+        </button>
+        {% else %}
+        {% if not result %}
+        <button class="row my-btn bring-center line-find" name="find-dates">
           <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
           <span class="find">
             Find
           </span>
         </button>
-      </div>
-      {% if result == 'Empty' %}
-      <div class="row bring-center">
-        <p class="line-find">
-          No such record
-        </p>
-      </div>
-      {% endif %}
-      {% else %}
-      <h4 class="row bring-center">Specify players lineup</h4>
-      <hr class="line">
-      <div class="row bring-center">
-        <select name="p1">
-          {% for p in players %}
-          <option value="{{p}}">{{p}}</option>
-          {% endfor %}
-        </select>
-        <select name="p2">
-          {% for p in players %}
-          <option value="{{p}}">{{p}}</option>
-          {% endfor %}
-        </select>
-        <select name="p3">
-          {% for p in players %}
-          <option value="{{p}}">{{p}}</option>
-          {% endfor %}
-        </select>
-        <select name="p4">
-          {% for p in players %}
-          <option value="{{p}}">{{p}}</option>
-          {% endfor %}
-        </select>
-        <select name="p5">
-          {% for p in players %}
-          <option value="{{p}}">{{p}}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="row bring-center">
-        <button class="row my-btn bring-center line-find" name="eval">
-          <img class="find-icon" src="{% static 'icons/eval.png' %}" width="32" height="32">
+        {% endif %}
+        {% endif %}
+        {% if reset_available %}
+        <button class="row my-btn bring-center line-find" name="reset">
+          <img class="find-icon" src="{% static 'icons/reset.png' %}" width="32" height="32">
           <span class="find">
-            Evaluate
+            Reset
           </span>
         </button>
-        <button class="row my-btn bring-center line-find" name="back">
-          <img class="find-icon" src="{% static 'icons/back.png' %}" width="32" height="32">
-          <span class="find">
-            Back
-          </span>
-        </button>
+        {% endif %}
       </div>
-      {% endif %}
     </div>
+    {% if result %}
+    <div class="col-md-12 center main-panel result-panel">
+      <table class="table-width" cellpadding="0" cellspacing="0" border="0">
+        <thead>
+          <tr>
+            {% for data in theaders %}
+            <th class="table-column">{{data}}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody class="table-body">
+          {% for row in next_rows %}
+          <tr>
+            {% for col in row %}
+            <td class="table-column">
+              {{col}}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
   </form>
   <script type="text/javascript" src="{% static 'js/lineup_eval.js' %}"></script>
 </body>

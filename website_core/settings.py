@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "data_finder",
+    "season_reporter",
 ]
 
 MIDDLEWARE = [

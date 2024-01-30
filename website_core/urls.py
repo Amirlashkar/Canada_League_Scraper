@@ -17,10 +17,12 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from season_reporter import views as rpt
 
 urlpatterns = [
     path("admin/", admin.site.urls, name="admin"),
     path("", include("data_finder.urls")),
+    path("season", rpt.report_reder, name="season"),
 ]
 
 if settings.DEBUG:

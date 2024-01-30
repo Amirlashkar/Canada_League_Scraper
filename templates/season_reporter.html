@@ -1,67 +1,37 @@
 {% extends './base.html' %}
 {% block title %}
 {% if result %}
-{{home}} V {{visitor}} Analytics
+{{selected_team}} Seasonal Report
 {% else %}
-Analytics Finder
+Seasonal Reporter
 {% endif %}
 {% endblock %}
 {% block content %}
 {% load static %}
 
 <head>
-  <link type="text/css" rel="stylesheet" href="{% static 'css/analytics.css' %}"/>
-  <link type="text/css" rel="stylesheet" href="{% static 'css/switch.css' %}"/>
+  <link type="text/css" rel="stylesheet" href="{% static 'css/analytics.css' %}" />
+  <link type="text/css" rel="stylesheet" href="{% static 'css/switch.css' %}" />
 </head>
+
 <body>
   <div class="title col-md-4 offset-md-4 row">
-    <img class="analyze-icon" src="{% static 'icons/analyze.png' %}" width="32" height="32">
+    <img class="analyze-icon" src="{% static 'icons/season.png' %}" width="32" height="32">
     <h1>
-      Analytics Finder
+      Seasonal Reporter
     </h1>
   </div>
   <form action="" method="post">
     {% csrf_token %}
     <div class="col-md-6 offset-md-3 center main-panel">
-      <h4>Find Carleton data since</h4>
+      <h4>Find Seasonal Data</h4>
       <hr class="line">
       <div class="row bring-center">
         <div class="col-md-6">
-          <p>Home</p>
-          {% if reset_available %}
-          <label class="bring-center">
-            {{home}}
-          </label>
-          {% else %}
-          <select name="home-team">
-            {% for team in home_teams %}
+          <p>Team</p>
+          <select name="team">
+            {% for team in teams %}
             <option value="{{team}}">{{team}}</option>
-            {% endfor %}
-          </select>
-          {% endif %}
-        </div>
-        <div class="col-md-6">
-          <p>Visitor</p>
-          {% if reset_available %}
-          <label class="bring-center">
-            {{visitor}}
-          </label>
-          {% else %}
-          <select name="visitor-team">
-            {% for team in visitor_teams %}
-            <option value="{{team}}">{{team}}</option>
-            {% endfor %}
-          </select>
-          {% endif %}
-        </div>
-      </div>
-      {% if dates %}
-      <div class="row bring-center">
-        <div class="col-md-6">
-          <p>Dates</p>
-          <select name="date">
-            {% for date in dates %}
-            <option value="{{date}}">{{date}}</option>
             {% endfor %}
           </select>
         </div>
@@ -79,7 +49,7 @@ Analytics Finder
           </filter>
           <rect id="noise-rect" filter='url(#noiseFilter)' />
         </svg>
-        
+
         <input type="hidden" name="switch" id="switch" value="lineups">
         <div id="dynamic" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
           <div class="toggle">
@@ -93,37 +63,16 @@ Analytics Finder
             Lineups
           </label>
         </div>
-
       </div>
-      {% endif %}
       <div class="row bring-center">
-        {% if dates %}
-        <button class="row my-btn bring-center line-find" name="submit-match">
-          <img class="find-icon" src="{% static 'icons/submit.png' %}" width="32" height="32">
-          <span class="find">
-            Submit
-          </span>
-        </button>
-        {% else %}
-        {% if not result %}
-        <button class="row my-btn bring-center line-find" name="find-dates">
+        <button class="row my-btn bring-center line-find" name="find-data">
           <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
           <span class="find">
             Find
           </span>
         </button>
-        {% endif %}
-        {% endif %}
-        {% if reset_available %}
-        <button class="row my-btn bring-center line-find" name="reset">
-          <img class="find-icon" src="{% static 'icons/reset.png' %}" width="32" height="32">
-          <span class="find">
-            Reset
-          </span>
-        </button>
-        {% endif %}
       </div>
-      {% if no_dates %}
+      {% if no_data %}
       <div class="row bring-center row-margin">
         <label>
           No such match found on database
@@ -153,7 +102,6 @@ Analytics Finder
           {% endfor %}
         </tbody>
       </table>
-      <h3 class="row-margin"><a href="{% url 'lineup_eval' %}">Use Lineup Evaluation App</a></h3>
     </div>
     {% endif %}
   </form>
