@@ -150,7 +150,7 @@ def lineup_eval(request):
         HorV = "Home" if "Carleton" in home else "Visitor"
         players, _ = list_players(raw_data, 0, HorV)
 
-        render_dict["players"] = players
+        render_dict["players"] = request.session["players"] = players
         render_dict["home"] = home
         render_dict["visitor"] =visitor
         render_dict["selected_date"] = request.POST["date"]
@@ -170,29 +170,41 @@ def lineup_eval(request):
             chosen_players.append(request.POST[f"p{num}"])
 
         chosen_players = str(tuple(sorted(chosen_players)))
-        row = lineup_table.loc[lineup_table["Lineup"] == chosen_players]
+        table = lineup_table.loc[lineup_table["Lineup"] == chosen_players]
+        if not table.empty:
 
-        try:
-            table = row.drop(["home/visitor", "opponent"], axis=1)
-            table = table.drop(columns=table.filter(like="Unnamed").columns)
-        except:
-            pass
-        
-        
-        data = table.to_numpy()
-        data = data_showoff(data)
-        
-        render_dict["theaders"] = table.columns
-        render_dict["next_rows"] = _data
-        render_dict["home"] = home
-        render_dict["visitor"] = visitor
-        render_dict["selected_date"] = date
-        render_dict["reset_available"] = True
-        render_dict["result"] = True
+            try:
+                table = table.drop(["home/visitor", "opponent"], axis=1)
+                table = table.drop(columns=table.filter(like="Unnamed").columns)
+            except:
+                pass
+            
+            data = table.to_numpy()
+            data = data_showoff(data)
+            
+            render_dict["theaders"] = table.columns
+            render_dict["next_rows"] = data
+            render_dict["home"] = home
+            render_dict["visitor"] = visitor
+            render_dict["selected_date"] = date
+            render_dict["players"] = request.session["players"]
+            render_dict["reset_available"] = True
+            render_dict["result"] = True
+
+        else:
+            render_dict["home"] = home
+            render_dict["visitor"] = visitor
+            render_dict["selected_date"] = date
+            render_dict["players"] = request.session["players"]
+            render_dict["reset_available"] = True
+            render_dict["no_lineup"] = True
 
     elif "reset" in request.POST:
-        del request.session["home"]
-        del request.session["visitor"]
-        del request.session["date"]
+        try:
+            del request.session["home"]
+            del request.session["visitor"]
+            del request.session["date"]
+        except:
+            pass
 
     return render(request, "lineup_eval.html", render_dict)

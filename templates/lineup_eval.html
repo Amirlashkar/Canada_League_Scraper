@@ -72,7 +72,7 @@
       {% elif no_dates %}
       <div class="row bring-center row-margin">
         <label>
-          No such match found on database
+          No such match found on database !
         </label>
       </div>
       {% endif %}
@@ -124,6 +124,13 @@
         </button>
         {% endif %}
       </div>
+      {% if no_lineup %}
+      <div class="row bring-center row-margin">
+        <label>
+          Selected lineup didn't play !
+        </label>
+      </div>
+      {% endif %}
     </div>
     {% if result %}
     <div class="col-md-12 center main-panel result-panel">
