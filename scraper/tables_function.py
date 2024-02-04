@@ -145,10 +145,15 @@ def initial_edit(df: pd.DataFrame, HorV: str) -> pd.DataFrame:
     df: raw table
     HorV: team side
     """
-
+    
+    # look up pattern to find player name
     pattern = "([A-Z]+\W*[A-Z]+,[A-Z]+\W*[A-Z]+)"
+    
+    # players list of both sides that is needed in following
     side_plist, _ = list_players(df, 0, HorV)
     op_plist, _ = list_players(df, 0, "Home" if HorV[0] == "V" else "Visitor")
+
+    # filling nan values on two column to not face error on main_loop
     df[f"H-event"] = df[f"H-event"].fillna("No Event")
     df[f"V-event"] = df[f"V-event"].fillna("No Event")
     for index, row in df.iterrows():
@@ -158,6 +163,8 @@ def initial_edit(df: pd.DataFrame, HorV: str) -> pd.DataFrame:
             if player:
                 player = player[0].strip()
                 if player not in compare_list:
+                    # some names are entered invalid or incomplete, then will search for most similar at players list
+                    # found similar is going to be exchanged with player cell on dataframe
                     found = difflib.get_close_matches(
                         player, compare_list, n=1, cutoff=0.0
                     )[0]
@@ -180,12 +187,24 @@ def initial_edit(df: pd.DataFrame, HorV: str) -> pd.DataFrame:
     return df
 
 
-def create_eff_df(cusMin_df, eff_columns, custom_minute=1):
+def create_eff_df(cusMin_df:pd.DataFrame, eff_columns:list, custom_minute:float=1):
+    """
+    creating effectiveness table from event dataframe separated by custom chunks of time ;
+
+    cusMin_df: dataframe with custom time chunk size 
+    eff_columns: list of dynamic strings representing effectiveness dataframe columns each as tuple
+    custom_minute: size of time chunks
+    """
+
+    # creating effectiveness dataframe like a MultiIndex dataframe by usage of eff_columns
     eff_df = pd.DataFrame({key: [] for key in [("player", "player")] + eff_columns})
     eff_df.columns = pd.MultiIndex.from_tuples([("player", "player")] + eff_columns)
+
     for _, row in cusMin_df.iterrows():
         data = {("player", "player"): [row["player", "player", "player"]]}
         for col in eff_columns:
+            ######### offenese and defence calculation should be changed cause we already
+            ######### have that on event_num dataframe
             alter = []
             for event in pos_contrib:
                 alter.append(col + (event,))
@@ -211,6 +230,8 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
     This is the main part which creates time and events tables drived from raw table
 
     df: raw table
+    HorV: followed team side
+    custom_minute: custom size of time chunks
     """
 
     # ------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -220,6 +241,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
     pts_expression = 0 if HorV[0] == "H" else 1
     ptc_expression = 0 if HorV[0] == "V" else 1
 
+    # converting time column strings to datetime to be comparable
     df["Time"] = pd.to_datetime(df["Time"], format="%M:%S", errors="coerce")
     under5min_df = df.loc[df["Time"] < datetime.strptime("05:00", "%M:%S")]
 

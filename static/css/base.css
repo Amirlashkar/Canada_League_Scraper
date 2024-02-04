@@ -1,7 +1,8 @@
 body {
   color: white;
-  background-image: url("/static/images/back_pattern.png");
-  background-repeat: repeat;
+  background-image: url("/static/images/back.png");
+  background-repeat: no-repeat;
+  background-size: cover;
   /* You can adjust other properties like background-size, background-position, etc. */
 }
 
