@@ -11,7 +11,7 @@ import os
 import yaml
 import time
 from datetime import datetime
-from functions import *
+from scraper_functions import *
 
 driver_options = webdriver.ChromeOptions()
 driver_options.add_argument("--headless")

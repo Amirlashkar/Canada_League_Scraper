@@ -1,17 +1,14 @@
 from zipfile import ZipFile, ZIP_DEFLATED
-from datetime import datetime
 import time
 import pandas as pd
 import os
-import ast
-import re
-from copy import deepcopy
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import (
     NoSuchElementException,
     StaleElementReferenceException,
 )
 
+# defining inventory.csv path and creating it if not exists
 inventory_path = os.path.join(os.getcwd(), "data", "inventory.csv")
 if not os.path.exists(inventory_path):
     os.makedirs(os.path.dirname(inventory_path))
@@ -19,10 +16,17 @@ if not os.path.exists(inventory_path):
     df.to_csv(inventory_path)
 
 
-# scraper-specific functions
-# function to check if an element exists
 def check_exists(driver, by: str, target: str):
+    """
+    checking if some tag exists on template or not ;
+    some tags may be still on loading stage.
+
+    driver: webdriver object
+    by: on what aspect this function should search for specific tag
+    target: string of target in that specific 'by' aspect
+    """
     try:
+        # conditions for different aspects
         if by == "XPATH":
             driver.find_element(By.XPATH, target)
         elif by == "ID":
@@ -33,45 +37,74 @@ def check_exists(driver, by: str, target: str):
             driver.find_element(By.LINK_TEXT, target)
         elif by == "TAG_NAME":
             driver.find_element(By.TAG_NAME, target)
+
+    # return False if persued tag is not loaded or changed
+    # not loaded tag
     except NoSuchElementException:
         return False
+    # changed tag
     except StaleElementReferenceException:
         return False
     return True
 
 
-# this function causes driver to wait in a loop till an element exists
-def wait_till_located(driver, by: str, target: str, timestamp: int):
+def wait_till_located(driver, by: str, target: str, timestep: int):
+    """
+    walks through a while loop and uses 'check_exists' function constantly till target tag appeares or become loaded completely
+
+    driver: webdriver object
+    by: on what aspect this function should search for specific tag
+    target: string of target in that specific 'by' aspect
+    timestep: each iteration time will be added to timestep as a delay
+    """
+    # a loop till 'check_exists' function returns True
     while check_exists(driver, by, target) == False:
         print("Loading page...")
-        time.sleep(timestamp)
+        time.sleep(timestep)
 
 
-# data management functions
 def main_sheet(df_list: list, sheet_name: str) -> None:
+    """
+    this function tells scraper how to assign each quarter df into one df and save it on data folder
+
+    df_list: list of quarters df that are going to stick together
+    sheet_name: name of sheet
+    """
     q = 1
     ls = []
     for i, df in enumerate(df_list):
         if type(df) == pd.DataFrame:
+            # adding some row for the sake of quarter change mentioning
             quarter_row = pd.DataFrame(
                 [[f"Quarter {q}" for _ in range(6)]], columns=df.columns
             )
+            # assining 'Home' and 'Visitor' columns of quarter row to team names
             quarter_row["Home"] = [df_list[i - 1]["Home"]]
             quarter_row["Visitor"] = [df_list[i - 1]["Visitor"]]
+            # sticking made quarter row as first row of last df
             df = pd.concat([quarter_row, df], ignore_index=True)
+            # appending df with quarter row to a list
             ls.append(df)
             q += 1
 
+    # combining all quarter-row-containing-dfs together
     df = pd.concat(ls, ignore_index=True)
+
+    # make data folder if not exists
     data_path = os.path.join(os.getcwd(), "data")
     if not os.path.exists(data_path):
         os.mkdir(data_path)
+
     df.to_csv(os.path.join(data_path, sheet_name))
 
 
-def inventory_sheet(home_team, visitor_team, date):
+def inventory_sheet(home_team: str, visitor_team: str, date: str):
     """
     adds new data info to inventory columns
+
+    home_team: name of home team
+    visitor_team: name of visitor team
+    date: date of match between these two teams
     """
     data = {
         "Home": [home_team],
@@ -85,8 +118,16 @@ def inventory_sheet(home_team, visitor_team, date):
     df.to_csv(inventory_path)
 
 
-def check_inventory(home_team, visitor_team, date) -> bool:
+def check_inventory(home_team: str, visitor_team: str, date: str) -> bool:
+    """
+    checking inventory sheet if it has data of specefic match or not
+
+    home_team: name of home team
+    visitor_team: name of visitor team
+    date: date of match between these two teams
+    """
     df = pd.read_csv(inventory_path)
+    # comparison line
     expression = df[
         (df["Home"] == home_team)
         & (df["Visitor"] == visitor_team)
@@ -95,49 +136,3 @@ def check_inventory(home_team, visitor_team, date) -> bool:
 
     # retrun true if there is no such data
     return len(expression) == 0
-
-
-def finder(follow_up_team, start_date, end_date):
-    """
-    finds matches for specific team in specific period of time
-    """
-    inventory_df = pd.read_csv(inventory_path)
-    inventory_df["Date"] = pd.to_datetime(
-        inventory_df["Date"], format="%m_%d_%Y")
-    start_date_obj = datetime.strptime(start_date, "%Y-%m-%d")
-    end_date_obj = datetime.strptime(end_date, "%Y-%m-%d")
-    filtered_df = inventory_df.loc[
-        (
-            (inventory_df["Home"] == follow_up_team)
-            | (inventory_df["Visitor"] == follow_up_team)
-        )
-        & (inventory_df["Date"] > start_date_obj)
-        & (inventory_df["Date"] <= end_date_obj)
-    ]
-
-    if filtered_df.empty:
-        return "empty"
-    else:
-        return filtered_df
-
-
-def find_final_tables(Home, Visitor, Date):
-    """
-    finds one match with provided info
-    """
-    tables_path = os.path.join(os.getcwd(), "tables")
-    refered_table_path = os.path.join(tables_path, Home, Visitor, Date)
-
-    if not os.path.exists(refered_table_path):
-        return "Empty"
-    else:
-        return "There is such data"
-
-
-def zipper(user_path, zip_name, path_to_zip):
-    saving_path = os.path.join(user_path, zip_name)
-    with ZipFile(saving_path, "w", compression=ZIP_DEFLATED, compresslevel=9) as zf:
-        for file in os.listdir(path_to_zip):
-            file_path = os.path.join(path_to_zip, file)
-            zf.write(file_path, arcname=file)
-    return saving_path

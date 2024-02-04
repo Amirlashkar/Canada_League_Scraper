@@ -26,9 +26,14 @@ def format_names(ls) -> list:
     formatted_players = []
     for player in ls:
         name_parts = player.split(" ")
+        # first name consist of all words except last word considering last name has only one word
         first_name = " ".join(name_parts[:-1])
+        # last word is last name
         last_name = name_parts[-1]
+
+        # swaping names and converting their letters to uppercase
         formatted_name = last_name.upper() + "," + first_name.upper()
+        # removing any dot character if exists
         formatted_name = formatted_name.replace(".", "")
         formatted_players.append(formatted_name)
 
@@ -43,12 +48,15 @@ def list_players(df: pd.DataFrame, quarter_index: int, HorV: str) -> tuple:
     quarter_index: row index of an specific quarter which we are extracting lineup from it
     HorV: either you are inspecting Home or Visitor team players
     """
-
+    
+    # reading dictionary of players name from string on quarter row
     p_dict = ast.literal_eval(df.iloc[quarter_index][HorV])
     p_list = p_dict["starters"].copy()
+    # adding reserve players to players list and removing 'Team' if on players list
     p_list.extend(p_dict["reserves"])
-    p_list.remove("Team")
-
+    if "Team" in p_list:
+        p_list.remove("Team")
+    
     sts = p_dict["starters"].copy()
 
     p_list = format_names(p_list)
@@ -131,8 +139,8 @@ def provide_data(home: str, visitor: str, date: str) -> pd.DataFrame:
 
 def initial_edit(df: pd.DataFrame, HorV: str) -> pd.DataFrame:
     """
-    this makes 4 other column for raw table which are player interfered and exact event occured
-    for both side.
+    this makes 4 other column within raw table which are mentioning 
+    player infered and exact event occured for both side.
 
     df: raw table
     HorV: team side

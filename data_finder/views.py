@@ -1,5 +1,5 @@
 from django.shortcuts import redirect, render
-from scraper.functions import *
+from scraper.scraper_functions import *
 from scraper.tables_function import list_players, data_showoff
 import pandas as pd
 import numpy as np
@@ -94,12 +94,18 @@ def analytics(request):
         render_dict["theaders"] = table.columns
         # this element controls visualization of some buttons
         render_dict["result"] = True
-
+        
+        # remember selected teams from django session
         home_team = request.session["home"]
         visitor_team = request.session["visitor"]
+
+        # feed selected teams to template to show as static tag
         render_dict["home"] = home_team
         render_dict["visitor"] = visitor_team
+
+        # show reset button and also changing in some tags appearence
         render_dict["reset_available"] = True
+
         # needed for advertising lineup evaluation app
         render_dict["switch"] = switch
 
@@ -113,6 +119,8 @@ def analytics(request):
 
 
 def lineup_eval(request):
+    # some lines are repeatitive so i won't write comments on them
+
     if not request.user.is_superuser:
         return redirect("is_superuser")
 
@@ -147,7 +155,11 @@ def lineup_eval(request):
         filename = home + "_" + visitor + "_" + date + ".csv"
         file_path = os.path.join(os.path.dirname(inventory_path), filename)
         raw_data = pd.read_csv(file_path)
+        
+        # declaring HorV variable to get right list of player for Carleton ;
+        # this line should be changed if data analyze is implemented on all teams
         HorV = "Home" if "Carleton" in home else "Visitor"
+        # a function to get players list out of first row on raw dataframe
         players, _ = list_players(raw_data, 0, HorV)
 
         render_dict["players"] = request.session["players"] = players
@@ -164,12 +176,15 @@ def lineup_eval(request):
 
         lineup_table_path = os.path.join(tables_path, home, visitor, date, "LFinalTable.csv")
         lineup_table = pd.read_csv(lineup_table_path)
-
+        
+        # taking chosen players on template into a list
         chosen_players = []
         for num in range(1, 6):
             chosen_players.append(request.POST[f"p{num}"])
 
+        # chosen players name needs to be sorted as lineups in saved tables are
         chosen_players = str(tuple(sorted(chosen_players)))
+        # finding chosen lineup on table
         table = lineup_table.loc[lineup_table["Lineup"] == chosen_players]
         if not table.empty:
 
