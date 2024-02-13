@@ -87,7 +87,11 @@ class Converter:
     def get_tasks(self):
         files = os.listdir(self.data_path)
         files.remove("inventory.csv")
-        files.remove(".DS_Store")
+        try:
+            files.remove(".DS_Store")
+        except:
+            pass
+
         tasks = []
         for file in files:
             tasks.append(self.data2table(file))
