@@ -88,7 +88,10 @@ def cal_rtg(points:int, possession:int) -> float:
     defense: number of defensive acts
     time: in-game time for a player that we are calculating his effectiveness
     """
-    rtg = (points / possession) * 100
+    try:
+        rtg = (points / possession) * 100
+    except ZeroDivisionError:
+        rtg = 0
     
     return rtg
 
@@ -225,7 +228,7 @@ def create_eff_df(cusMin_df:pd.DataFrame, eff_columns:list, custom_minute:float=
     return eff_df
 
 
-def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
+async def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
     """
     This is the main part which creates time and events tables drived from raw table
 
@@ -233,6 +236,9 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
     HorV: followed team side
     custom_minute: custom size of time chunks
     """
+
+    if df.shape[0] == 4:
+        raise IndexError("Dataframe is empty")
 
     # ------------------------------------------------------------------------------------------------------------------------------------------------------------
     # dependencies
@@ -513,12 +519,14 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
             ptccache = time_dict["ptccache"][player_index]
             if "goes to the bench" in row[f"{HorV[0]}_exactevent"]:
                 # sometimes player name wasn't nither on starters nor players entered the game but he exits suddenly :|
-                try:
-                    in_lineup.remove(row[f"{HorV[0]}_player"])
-                except:
-                    print(
-                        f"{row[f'{HorV[0]}_player']} time analyze has a slight difference from reality due to invalid data !"
-                    )
+                # try:
+                in_lineup.remove(row[f"{HorV[0]}_player"])
+                # except:
+                #     print(
+                #         f"{row[f'{HorV[0]}_player']} time analyze has a slight difference from reality due to invalid data !"
+                #     )
+                    # return None
+
                 if cached_time == "not_changed":
                     enter_time = datetime.strptime("10:00", "%M:%S")
                     enter_score_index = quarter_indices[quarter - 1] + 1
@@ -793,11 +801,13 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
 def create_pfinal_df(
     df: pd.DataFrame,
     HorV: str,
+    date:str,
     events_df: pd.DataFrame,
     time_score_df: pd.DataFrame,
     events_df5min: pd.DataFrame,
     time_score_df5min: pd.DataFrame,
 ) -> pd.DataFrame:
+
     globals()["neg_contrib2"] = []
     globals()["neg_contrib4"] = []
     globals()["pos_contrib2"] = []
@@ -813,11 +823,16 @@ def create_pfinal_df(
 
     player_final_table = pd.DataFrame(columns=final_columns)
     for _, row in events_df.iterrows():
-        points_scored = float(
-            time_score_df.loc[time_score_df[("player", "player")] == row["player"]][
-                ("total", "pts")
-            ].to_list()[0]
-        )
+        # points_scored = float(
+        #     time_score_df.loc[time_score_df[("player", "player")] == row["player"]][
+        #         ("total", "pts")
+        #     ].to_list()[0]
+        # )
+        
+        pts = 0
+        for event, score in list(scoring_values.items()):
+            pts += float(row[event] * score)
+
         points_conceded = float(
             time_score_df.loc[time_score_df[("player", "player")] == row["player"]][
                 ("total", "ptc")
@@ -865,7 +880,7 @@ def create_pfinal_df(
         )
 
         try:
-            off_rtg = cal_rtg(points_scored, global_off_possession)
+            off_rtg = cal_rtg(pts, global_off_possession)
             def_rtg = cal_rtg(points_conceded, global_def_possession)
         except ZeroDivisionError:
             off_rtg = 0
@@ -878,11 +893,11 @@ def create_pfinal_df(
 
         new_row = {
             "Player Name": [row["player"]],
-            "PtScored": [points_scored],
+            "PtsScored": [pts],
             "OffRtg": [off_rtg],
             "DefRtg": [def_rtg],
             "NetRtg": [net_rtg],
-            "ptsconceded": [points_conceded],
+            "PtsConceded": [points_conceded],
             "total off possession": [global_off_possession],
             "total def possession": [global_def_possession],
             "global efficiency": [global_efficiency],
@@ -890,6 +905,7 @@ def create_pfinal_df(
             "quarter4 last 5min efficiency": [quarter4_5min_eff],
             "minutes": minutes,
             "home/visitor": HorV,
+            "date": date,
             "opponent": opponent,
         }
 
@@ -906,6 +922,7 @@ def create_pfinal_df(
 def create_lfinal_df(
     df: pd.DataFrame,
     HorV: str,
+    date:str,
     lineup_time_score_df: pd.DataFrame,
     lineup_event_df: pd.DataFrame,
 ) -> pd.DataFrame:
@@ -963,16 +980,17 @@ def create_lfinal_df(
 
         new_row = {
             "Lineup": [row["lineup"]],
-            "PtScored": [points_scored],
+            "PtsScored": [points_scored],
             "OffRtg": off_rtg,
             "DefRtg": def_rtg,
             "NetRtg": net_rtg,
-            "ptsconceded": [points_conceded],
-            "global off possession": [global_off_possession],
-            "global def possession": global_def_possession,
+            "PtsConceded": [points_conceded],
+            "total off possession": [global_off_possession],
+            "total def possession": global_def_possession,
             "efficiency": [global_efficiency],
             "minutes": minutes,
             "home/visitor": HorV,
+            "date":date,
             "opponent": opponent,
         }
 

@@ -1,6 +1,7 @@
 from django.shortcuts import redirect, render
 from scraper.scraper_functions import *
 from scraper.tables_function import list_players, data_showoff
+from scraper.constants import show_table, lineup_show_table
 import pandas as pd
 import numpy as np
 import os
@@ -67,22 +68,16 @@ def analytics(request):
         date = request.POST["date"].replace("/", "_")
         
         # getting selected data
+        HorV = "Home" if home.strip() == "Carleton" else "Visitor"
         switch = "P" if request.POST["switch"] == "players" else "L"
-        table_path = os.path.join(tables_path, home, visitor, date, f"{switch}FinalTable.csv")
+        table_path = os.path.join(tables_path, home, visitor, date, HorV, f"{switch}FinalTable.csv")
         table = pd.read_csv(table_path)
 
-        # some match tables may have extra column starting with Unnamed that we drop it
-        try:
-            # unneeded columns are also dropped (some are shown on other tags and some are empty)
-            if switch == "P":
-                table = table.drop(["date", "game_type", "home/visitor", "opponent"], axis=1)
-            else:
-                table = table.drop(["home/visitor", "opponent"], axis=1)
-
-            table = table.drop(columns=table.filter(like="Unnamed").columns)
-        except:
-            pass
-
+        # choosing showing tables to user
+        if switch == "P":
+            table = table.reindex(columns=show_table)
+        else:
+            table = table.reindex(columns=lineup_show_table)
 
         # this function iterates over data and tries to summerize floats by two digits after floating-point and save them on new data
         data = table.to_numpy()
@@ -174,7 +169,8 @@ def lineup_eval(request):
         visitor = request.session["visitor"]
         date = request.session["date"]
 
-        lineup_table_path = os.path.join(tables_path, home, visitor, date, "LFinalTable.csv")
+        HorV = "Home" if home.strip() == "Carleton" else "Visitor"
+        lineup_table_path = os.path.join(tables_path, home, visitor, date, HorV, "LFinalTable.csv")
         lineup_table = pd.read_csv(lineup_table_path)
         
         # taking chosen players on template into a list
@@ -188,12 +184,20 @@ def lineup_eval(request):
         table = lineup_table.loc[lineup_table["Lineup"] == chosen_players]
         if not table.empty:
 
-            try:
-                table = table.drop(["home/visitor", "opponent"], axis=1)
-                table = table.drop(columns=table.filter(like="Unnamed").columns)
-            except:
-                pass
+            # try:
+            #     table = table.drop(["total off possession",
+            #                         "total def possession",
+            #                         "date",
+            #                         "home/visitor",
+            #                         "opponent"], axis=1)
+            #
+            #     table = table.drop(columns=table.filter(like="Unnamed").columns)
+            #
+            # except:
+            #     pass
             
+            table = table.reindex(lineup_show_table)
+
             data = table.to_numpy()
             data = data_showoff(data)
             

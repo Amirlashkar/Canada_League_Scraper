@@ -16,7 +16,12 @@
 }
 
 .result-panel {
+  width: auto;
+  overflow-x: auto;
+  overflow-y: auto;
+  height: 600px;
   margin-top: 5% !important;
+  margin-bottom: 5% !important;
   font-size: 65% !important;
 }
 
@@ -113,13 +118,49 @@ select:hover {
   margin-bottom: 25px;
 }
 
+table {
+  border-collapse: separate;
+}
+
+.sticky-header {
+  z-index: 3;
+  position: sticky;
+  top: 0;
+  background-color: #050505;
+  border: solid 1px #464646;
+}
+
+.sticky-col {
+  z-index: 2;
+  position: sticky;
+  left: 0;
+  background-color: #050505;
+  border: solid 1px #464646;
+
+}
+
+.hiding-scroll {
+  z-index: 1;
+  top: 0;
+  position: sticky;
+}
+
+.hiding-col {
+  z-index: 1;
+  left: 0;
+  position: sticky;
+}
+
 .table-width {
   width: 100%;
 }
 
 .table-column {
+  position: sticky;
+  left: 0;
+  white-space: nowrap;
   padding: 18px;
-  border: solid 1px #464646;
+  border: solid 1px #464646 !important;
 }
 
 .table-body {

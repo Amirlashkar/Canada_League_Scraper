@@ -132,22 +132,32 @@ Analytics Finder
       {% endif %}
     </div>
     {% if result %}
-    <div class="col-md-12 center main-panel result-panel">
+    <div class="col-md-10 offset-md-1 center main-panel result-panel text-center">
       <table class="table-width" cellpadding="0" cellspacing="0" border="0">
-        <thead>
+        <thead class="sticky-header">
           <tr>
             {% for data in theaders %}
-            <th class="table-column">{{data}}</th>
+            {% if forloop.counter != 1 %}
+            <th class="table-column hiding-col">{{data}}</th>
+            {% else %}
+            <th class="table-column sticky-col">{{data}}</th>
+            {% endif %}
             {% endfor %}
           </tr>
         </thead>
         <tbody class="table-body">
           {% for row in next_rows %}
-          <tr>
+          <tr class="hiding-scroll">
             {% for col in row %}
+            {% if forloop.counter != 1 %}
             <td class="table-column">
               {{col}}
             </td>
+            {% else %}
+            <td class="table-column sticky-col">
+              {{col}}
+            </td>
+            {% endif %}
             {% endfor %}
           </tr>
           {% endfor %}

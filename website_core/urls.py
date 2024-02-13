@@ -22,7 +22,7 @@ from season_reporter import views as rpt
 urlpatterns = [
     path("admin/", admin.site.urls, name="admin"),
     path("", include("data_finder.urls")),
-    path("season", rpt.report_reder, name="season"),
+    path("season", rpt.report_render, name="season"),
 ]
 
 if settings.DEBUG:
