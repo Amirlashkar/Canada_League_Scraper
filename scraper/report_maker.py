@@ -112,7 +112,7 @@ class Reporter:
                                                                 row["total def possession"],
                                                                 row["minutes"]), axis=1)
 
-            summed_df["OffRtg"] = summed_df.apply(lambda row: cal_rtg(row["PtsScored"],
+            summed_df["OffRtg"] = summed_df.apply(lambda row: cal_rtg(row["realPtsScored"],
                                                                 row["total off possession"]), axis=1)
 
             summed_df["DefRtg"] = summed_df.apply(lambda row: cal_rtg(row["PtsConceded"],

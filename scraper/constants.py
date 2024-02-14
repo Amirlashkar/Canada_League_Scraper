@@ -55,6 +55,7 @@ neg_contrib = [
 final_columns = [
     "Player Name",
     "PtsScored",
+    "realPtsScored",
     "PtsConceded",
     "total off possession",
     "total def possession",

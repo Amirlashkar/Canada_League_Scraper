@@ -894,6 +894,7 @@ def create_pfinal_df(
         new_row = {
             "Player Name": [row["player"]],
             "PtsScored": [showing_pts],
+            "realPtsScored": [points_scored],
             "OffRtg": [off_rtg],
             "DefRtg": [def_rtg],
             "NetRtg": [net_rtg],
