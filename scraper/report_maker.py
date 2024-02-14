@@ -98,6 +98,8 @@ class Reporter:
             concat_df = pd.concat(dfs_ls[each])
 
             try:
+                # CAUTION: last 5min efficiencies should be somehow filtered of "Not in the time" first and then 
+                # you can get mean of all the columns to show for each player !!!
                 summed_df = concat_df.groupby(["Player Name"]).sum()
             except:
                 summed_df = concat_df.groupby(["Lineup"]).sum()

@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from scraper.tables_function import data_showoff
+from scraper.constants import show_table, lineup_show_table
 import pandas as pd
 import os
 
@@ -19,12 +20,19 @@ def report_render(request):
     
     if "find-data" in request.POST:
         team = request.POST["team"]
-        switch = request.POST["switch"]
+        switch = "P" if request.POST["switch"] == "players" else "L"
         
         data_path = os.path.join(reports_path, team, f"{switch[0].upper()}SeasonalReport.csv")
         if os.path.exists(data_path):
 
             table = pd.read_csv(data_path)
+            if switch[0] == "P":
+                table = table.reindex(columns=show_table)
+                # CAUTION: last 5min efficiencies should first become measured to be shown
+                table = table.drop(columns=table.filter(like="last").columns)
+            else:
+                table = table.reindex(columns=lineup_show_table)
+
             try:
                 table = table.drop(columns=table.filter(like="Unnamed").columns)
             except:

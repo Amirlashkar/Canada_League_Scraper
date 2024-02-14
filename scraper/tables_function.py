@@ -823,16 +823,16 @@ def create_pfinal_df(
 
     player_final_table = pd.DataFrame(columns=final_columns)
     for _, row in events_df.iterrows():
-        # points_scored = float(
-        #     time_score_df.loc[time_score_df[("player", "player")] == row["player"]][
-        #         ("total", "pts")
-        #     ].to_list()[0]
-        # )
-        
-        pts = 0
+        showing_pts = 0
         for event, score in list(scoring_values.items()):
-            pts += float(row[event] * score)
+            showing_pts += float(row[event] * score)
 
+        points_scored = float(
+            time_score_df.loc[time_score_df[("player", "player")] == row["player"]][
+                ("total", "pts")
+            ].to_list()[0]
+        )
+        
         points_conceded = float(
             time_score_df.loc[time_score_df[("player", "player")] == row["player"]][
                 ("total", "ptc")
@@ -880,7 +880,7 @@ def create_pfinal_df(
         )
 
         try:
-            off_rtg = cal_rtg(pts, global_off_possession)
+            off_rtg = cal_rtg(points_scored, global_off_possession)
             def_rtg = cal_rtg(points_conceded, global_def_possession)
         except ZeroDivisionError:
             off_rtg = 0

@@ -75,7 +75,6 @@ final_columns = [
 show_table = [
     "Player Name",
     "PtsScored",
-    "PtsConceded",
     "global efficiency",
     "OffRtg",
     "DefRtg",
@@ -88,7 +87,6 @@ show_table = [
 lineup_show_table = [
     "Lineup",
     "PtsScored",
-    "PtsConceded",
     "efficiency",
     "OffRtg",
     "DefRtg",
