@@ -116,7 +116,7 @@ class Reporter:
                 ptsKey = "realPtsScored"
             else:
                 ptsKey = "PtsScored"
-            summed_df["OffRtg"] = summed_df.apply(lambda row: cal_rtg(row["realPtsScored"],
+            summed_df["OffRtg"] = summed_df.apply(lambda row: cal_rtg(row[ptsKey],
                                                                 row["total off possession"]), axis=1)
 
             summed_df["DefRtg"] = summed_df.apply(lambda row: cal_rtg(row["PtsConceded"],
