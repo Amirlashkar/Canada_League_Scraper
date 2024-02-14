@@ -111,7 +111,11 @@ class Reporter:
             summed_df["Eff"] = summed_df.apply(lambda row: cal_eff(row["total off possession"],
                                                                 row["total def possession"],
                                                                 row["minutes"]), axis=1)
-
+            
+            if LP == "P":
+                ptsKey = "realPtsScored"
+            else:
+                ptsKey = "PtsScored"
             summed_df["OffRtg"] = summed_df.apply(lambda row: cal_rtg(row["realPtsScored"],
                                                                 row["total off possession"]), axis=1)
 
