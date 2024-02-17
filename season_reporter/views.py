@@ -40,11 +40,27 @@ def report_render(request):
 
             data = table.to_numpy()
             data = data_showoff(data)
+            
+            request.session["table"] = table.to_dict()
 
             render_dict["theaders"] = table.columns
             render_dict["next_rows"] = data
             render_dict["result"] = True
         else:
             render_dict["no_data"] = True
+
+    elif "sort" in request.POST:
+        table = request.session["table"]
+        table = pd.DataFrame(table)
+        selected_col = request.POST["sort"]
+
+        data = table.sort_values(by=selected_col, ascending=False)
+        data = data.to_numpy()
+        data = data_showoff(data)
+
+        render_dict["theaders"] = table.columns
+        render_dict["next_rows"] = data
+        render_dict["result"] = True
+        render_dict["selected_col"] = selected_col
 
     return render(request, "season_reporter.html", render_dict)
