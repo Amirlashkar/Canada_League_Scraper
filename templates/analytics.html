@@ -55,6 +55,16 @@ Analytics Finder
           {% endif %}
         </div>
       </div>
+      {% if selected_date %}
+      <div class="row bring-center">
+        <div class="col-md-6">
+          <p>Date</p>
+          <label class="bring-center">
+            {{selected_date}}
+          </label>
+        </div>
+      </div>
+      {% endif %}
       {% if dates %}
       <div class="row bring-center">
         <div class="col-md-6">
@@ -93,7 +103,6 @@ Analytics Finder
             Lineups
           </label>
         </div>
-
       </div>
       {% endif %}
       <div class="row bring-center">
@@ -133,14 +142,31 @@ Analytics Finder
     </div>
     {% if result %}
     <div class="col-md-10 offset-md-1 center main-panel result-panel text-center">
-      <table class="table-width" cellpadding="0" cellspacing="0" border="0">
+      <p class="row">
+        <img class="find-icon" src="{% static 'icons/hint.png' %}" width="20" height="20">
+        <span class="table-hint">You can Click each table column to sort it as wanted !</span>
+      </p>
+      <table class="table-width row-margin" cellpadding="0" cellspacing="0" border="0">
         <thead class="sticky-header">
           <tr>
-            {% for data in theaders %}
+            {% for col in theaders %}
             {% if forloop.counter != 1 %}
-            <th class="table-column hiding-col">{{data}}</th>
+            <th class="table-column hiding-col">
+              <button class="sort-btn hover-btn" name="sort" value="{{col}}">
+                <img class="find-icon
+                {% if col != selected_col %}
+                hidden-img
+                {% endif %}
+                " src="{% static 'icons/sort.png' %}" width="20" height="20">
+                <span>
+                  {{col}}
+                </span>
+              </button>
+            </th>
             {% else %}
-            <th class="table-column sticky-col">{{data}}</th>
+            <th class="table-column sticky-col">
+              {{col}}
+            </th>
             {% endif %}
             {% endfor %}
           </tr>
@@ -148,14 +174,14 @@ Analytics Finder
         <tbody class="table-body">
           {% for row in next_rows %}
           <tr class="hiding-scroll">
-            {% for col in row %}
+            {% for data in row %}
             {% if forloop.counter != 1 %}
             <td class="table-column">
-              {{col}}
+              {{data}}
             </td>
             {% else %}
             <td class="table-column sticky-col">
-              {{col}}
+              {{data}}
             </td>
             {% endif %}
             {% endfor %}

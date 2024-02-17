@@ -65,16 +65,16 @@ def analytics(request):
         # some lines are repeated thus comments are the same
         home = request.session["home"]
         visitor = request.session["visitor"]
-        date = request.POST["date"].replace("/", "_")
+        date = request.session["selected_date"] = request.POST["date"].replace("/", "_")
         
         # getting selected data
         HorV = "Home" if home.strip() == "Carleton" else "Visitor"
-        switch = "P" if request.POST["switch"] == "players" else "L"
-        table_path = os.path.join(tables_path, home, visitor, date, HorV, f"{switch}FinalTable.csv")
+        switch = request.POST["switch"]
+        table_path = os.path.join(tables_path, home, visitor, date, HorV, f"{switch.upper()[0]}FinalTable.csv")
         table = pd.read_csv(table_path)
 
         # choosing showing tables to user
-        if switch == "P":
+        if switch == "players":
             table = table.reindex(columns=show_table)
         else:
             table = table.reindex(columns=lineup_show_table)
@@ -83,6 +83,11 @@ def analytics(request):
         data = table.to_numpy()
         data = data_showoff(data)
         
+        
+        # session savings
+        request.session["table"] = table.to_dict()
+        request.session["switch"] = switch
+
         # main content
         render_dict["next_rows"] = data
         # table headers
@@ -90,19 +95,39 @@ def analytics(request):
         # this element controls visualization of some buttons
         render_dict["result"] = True
         
-        # remember selected teams from django session
-        home_team = request.session["home"]
-        visitor_team = request.session["visitor"]
-
         # feed selected teams to template to show as static tag
-        render_dict["home"] = home_team
-        render_dict["visitor"] = visitor_team
+        render_dict["home"] = home
+        render_dict["visitor"] = visitor
+        render_dict["selected_date"] = date
 
         # show reset button and also changing in some tags appearence
         render_dict["reset_available"] = True
 
         # needed for advertising lineup evaluation app
         render_dict["switch"] = switch
+
+    elif "sort" in request.POST:
+        home = request.session["home"]
+        visitor = request.session["visitor"]
+        date = request.session["selected_date"]
+
+        table = request.session["table"]
+        table = pd.DataFrame(table)
+        selected_col = request.POST["sort"]
+        
+        data = table.sort_values(by=selected_col, ascending=False)
+        data = data.to_numpy()
+        data = data_showoff(data)
+
+        render_dict["home"] = home
+        render_dict["visitor"] = visitor
+        render_dict["selected_date"] = date
+        render_dict["theaders"] = table.columns
+        render_dict["next_rows"] = data
+        render_dict["reset_available"] = True
+        render_dict["result"] = True
+        render_dict["switch"] = request.session["switch"]
+        render_dict["selected_col"] = selected_col
 
     # just checking reset button clicking is enough to reset all to first form
     elif "reset" in request.POST:

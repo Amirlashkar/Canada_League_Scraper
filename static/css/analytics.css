@@ -167,3 +167,29 @@ table {
   overflow-x: auto;
   overflow-y: auto;
 }
+
+.sort-btn {
+  border: 0px !important;
+  background-color: #050505 !important;
+  color: white;
+}
+
+.table-hint {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+}
+
+.hover-btn {
+  position: relative;
+  margin-right: 31px;
+}
+
+.hidden-img {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.hover-btn:hover .hidden-img {
+  opacity: 1;
+}
