@@ -1,0 +1,136 @@
+{% extends './base.html' %}
+{% block title %}
+{% if result %}
+{{selected_team}} Seasonal Lineup Evaluation
+{% else %}
+Seasonal Lineup Evaluation
+{% endif %}
+{% endblock %}
+{% block content %}
+{% load static %}
+
+<head>
+  <link type="text/css" rel="stylesheet" href="{% static 'css/analytics.css' %}" />
+  <link type="text/css" rel="stylesheet" href="{% static 'css/switch.css' %}" />
+</head>
+
+<body>
+  <div class="title col-md-6 offset-md-3 row">
+    <img class="analyze-icon" src="{% static 'icons/season.png' %}" width="32" height="32">
+    <h1>
+      Full Season Lineup Evaluation
+    </h1>
+  </div>
+  <form action="" method="post">
+    {% csrf_token %}
+    <div class="col-md-6 offset-md-3 center main-panel">
+      <h4>Find Lineup</h4>
+      <hr class="line">
+      {% if not selected_team %}
+      <div class="row bring-center">
+        <div class="col-md-6">
+          <p>Team</p>
+          <select name="team">
+            {% for team in teams %}
+            <option value="{{team}}">{{team}}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      {% if not players %}
+      <div class="row bring-center">
+        <button class="row my-btn bring-center line-find" name="find-data">
+          <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
+          <span class="find">
+            Find
+          </span>
+        </button>
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="row bring-center row-margin">
+        <div class="col-md-6">
+          <p>Team</p>
+          <span>
+            {{selected_team}}
+          </span>
+        </div>
+      </div>
+      {% if players %}
+      <div class="row bring-center row-margin">
+        <div class="col-md-12">
+          <p>Lineup</p>
+          {% for num in "12345"|make_list %}
+          <select name="p{{num}}">
+            {% for p in players %}
+            <option value="{{p}}">{{p}}</option>
+            {% endfor %}
+          </select>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      <div class="row bring-center">
+        {% if players %}
+        <button class="row my-btn bring-center line-find" name="submit-lineup">
+          <img class="find-icon" src="{% static 'icons/submit.png' %}" width="32" height="32">
+          <span class="find">
+            Submit Lineup
+          </span>
+        </button>
+        {% endif %}
+        <button class="row my-btn bring-center line-find" name="reset">
+          <img class="find-icon" src="{% static 'icons/reset.png' %}" width="32" height="32">
+          <span class="find">
+            Reset
+          </span>
+        </button>
+      </div>
+      {% endif %}
+      {% if no_data %}
+      <div class="row bring-center row-margin">
+        <label>
+          No such lineup found on database
+        </label>
+      </div>
+      {% endif %}
+    </div>
+    {% if result %}
+    <div class="col-md-10 offset-md-1 center main-panel result-panel">
+      <table class="table-width" cellpadding="0" cellspacing="0" border="0">
+        <thead class="sticky-header">
+          <tr>
+            {% for data in theaders %}
+            {% if forloop.counter != 1 %}
+            <th class="table-column hiding-col">{{data}}</th>
+            {% else %}
+            <th class="table-column sticky-col">{{data}}</th>
+            {% endif %}
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody class="table-body">
+          {% for row in next_rows %}
+          <tr class="hiding-scroll">
+            {% for col in row %}
+            {% if forloop.counter != 1 %}
+            <td class="table-column">
+              {{col}}
+            </td>
+            {% else %}
+            <td class="table-column sticky-col">
+              {{col}}
+            </td>
+            {% endif %}
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </form>
+  <script type="text/javascript" src="{% static 'js/lineup_eval.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/switch.js' %}"></script>
+</body>
+{% endblock %}

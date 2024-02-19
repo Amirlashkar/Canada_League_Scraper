@@ -17,12 +17,16 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.auth.views import LogoutView
+from data_finder import views as dtf
 from season_reporter import views as rpt
 
 urlpatterns = [
     path("admin/", admin.site.urls, name="admin"),
-    path("", include("data_finder.urls")),
-    path("season", rpt.report_render, name="season"),
+    path("", dtf.is_superuser, name="is_superuser"),
+    path('logout/', LogoutView.as_view(next_page="is_superuser"), name='logout'),
+    path("data_finder/", include("data_finder.urls")),
+    path("season/", include("season_reporter.urls")),
 ]
 
 if settings.DEBUG:

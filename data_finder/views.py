@@ -138,7 +138,7 @@ def analytics(request):
         except KeyError:
             pass
 
-    return render(request, "analytics.html", render_dict)
+    return render(request, "df_analytics.html", render_dict)
 
 
 def lineup_eval(request):
@@ -211,20 +211,7 @@ def lineup_eval(request):
         # finding chosen lineup on table
         table = lineup_table.loc[lineup_table["Lineup"] == chosen_players]
         if not table.empty:
-
-            # try:
-            #     table = table.drop(["total off possession",
-            #                         "total def possession",
-            #                         "date",
-            #                         "home/visitor",
-            #                         "opponent"], axis=1)
-            #
-            #     table = table.drop(columns=table.filter(like="Unnamed").columns)
-            #
-            # except:
-            #     pass
-            
-            table = table.reindex(lineup_show_table)
+            table = table.reindex(columns=lineup_show_table)
 
             data = table.to_numpy()
             data = data_showoff(data)
@@ -254,4 +241,4 @@ def lineup_eval(request):
         except:
             pass
 
-    return render(request, "lineup_eval.html", render_dict)
+    return render(request, "df_lineup_eval.html", render_dict)

@@ -1,6 +1,4 @@
 from django.shortcuts import render, redirect
-from django.core.serializers.json import DjangoJSONEncoder
-from numpy import dstack
 from scraper.tables_function import data_showoff
 from scraper.constants import show_table, lineup_show_table
 import pandas as pd
@@ -8,7 +6,7 @@ import os
 
 reports_path = os.path.join(os.getcwd(), "reports")
 
-def report_render(request):
+def analytics(request):
     # the user who is not an admin accessed analitycs url would be redirected to root url
     if not request.user.is_superuser:
         return redirect("is_superuser")
@@ -71,5 +69,54 @@ def report_render(request):
         except KeyError:
             pass
     
-    return render(request, "season_reporter.html", render_dict)
+    return render(request, "sr_analytics.html", render_dict)
 
+
+def lineup_eval(request):
+    if not request.user.is_superuser:
+        return redirect("is_superuser")
+
+    teams = os.listdir(reports_path)
+    if ".DS_Store" in teams:
+        teams.remove(".DS_Store")
+    
+    render_dict = {}
+    render_dict["teams"] = teams
+    
+    if "find-data" in request.POST:
+        selected_team = request.POST["team"]
+        player_table_path = os.path.join(reports_path, selected_team, "PSeasonalReport.csv")
+        players = pd.read_csv(player_table_path)["Player Name"].to_list()
+
+        render_dict["players"] = request.session["players"] = players
+        render_dict["selected_team"] = request.session["selected_team"] = selected_team
+    
+    elif "submit-lineup" in request.POST:
+        selected_team = request.session["selected_team"]
+        lineup_table_path = os.path.join(reports_path, selected_team, "LSeasonalReport.csv")
+        lineup_table = pd.read_csv(lineup_table_path)
+
+        chosen_players = []
+        for num in range(1, 6):
+            chosen_players.append(request.POST[f"p{num}"])
+        
+        chosen_players = str(tuple(sorted(chosen_players)))
+        table = lineup_table.loc[lineup_table["Lineup"] == chosen_players]
+        if not table.empty:
+            table = table.reindex(columns=lineup_show_table)
+
+            data = table.to_numpy()
+            data = data_showoff(data)
+
+            render_dict["theaders"] = table.columns
+            render_dict["next_rows"] = data
+            render_dict["result"] = True
+
+        else:
+            render_dict["no_lineup"] = True
+
+    elif "reset" in request.POST:
+        del request.session["selected_team"]
+        del request.session["players"]
+
+    return render(request, "sr_lineup_eval.html", render_dict)
