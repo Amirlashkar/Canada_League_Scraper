@@ -114,7 +114,7 @@ Analytics Finder
           </span>
         </button>
         {% else %}
-        {% if not result %}
+        {% if not result and not home %}
         <button class="row my-btn bring-center line-find" name="find-dates">
           <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
           <span class="find">

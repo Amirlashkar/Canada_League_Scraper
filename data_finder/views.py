@@ -45,6 +45,8 @@ def analytics(request):
         # selected teams would be shown as static html tags after the condition button selected not as dropdowns
         render_dict["home"] = home_team
         render_dict["visitor"] = visitor_team
+        # availables reset button
+        render_dict["reset_available"] = True
 
         # checking if selected match with specific home, visitor and date exists or not
         match_tables_path = os.path.join(tables_path, home_team, visitor_team)
@@ -55,8 +57,6 @@ def analytics(request):
             ]
             # at what dates two team played together
             render_dict["dates"] = matches_date
-            # availables reset button
-            render_dict["reset_available"] = True
         else:
             # this activates error massage tag on html which says: "No such match found on database"
             render_dict["no_dates"] = True
@@ -71,39 +71,47 @@ def analytics(request):
         HorV = "Home" if home.strip() == "Carleton" else "Visitor"
         switch = request.POST["switch"]
         table_path = os.path.join(tables_path, home, visitor, date, HorV, f"{switch.upper()[0]}FinalTable.csv")
-        table = pd.read_csv(table_path)
+        if os.path.exists(table_path):
+            table = pd.read_csv(table_path)
 
-        # choosing showing tables to user
-        if switch == "players":
-            table = table.reindex(columns=show_table)
+            # choosing showing tables to user
+            if switch == "players":
+                table = table.reindex(columns=show_table)
+            else:
+                table = table.reindex(columns=lineup_show_table)
+
+            # this function iterates over data and tries to summerize floats by two digits after floating-point and save them on new data
+            data = table.to_numpy()
+            data = data_showoff(data)
+            
+            # session savings
+            request.session["table"] = table.to_dict()
+            request.session["switch"] = switch
+
+            # main content
+            render_dict["next_rows"] = data
+            # table headers
+            render_dict["theaders"] = table.columns
+            # this element controls visualization of some buttons
+            render_dict["result"] = True
+            
+            # feed selected teams to template to show as static tag
+            render_dict["home"] = home
+            render_dict["visitor"] = visitor
+            render_dict["selected_date"] = date
+
+            # show reset button and also changing in some tags appearence
+            render_dict["reset_available"] = True
+
+            # needed for advertising lineup evaluation app
+            render_dict["switch"] = switch
+
         else:
-            table = table.reindex(columns=lineup_show_table)
-
-        # this function iterates over data and tries to summerize floats by two digits after floating-point and save them on new data
-        data = table.to_numpy()
-        data = data_showoff(data)
-        
-        # session savings
-        request.session["table"] = table.to_dict()
-        request.session["switch"] = switch
-
-        # main content
-        render_dict["next_rows"] = data
-        # table headers
-        render_dict["theaders"] = table.columns
-        # this element controls visualization of some buttons
-        render_dict["result"] = True
-        
-        # feed selected teams to template to show as static tag
-        render_dict["home"] = home
-        render_dict["visitor"] = visitor
-        render_dict["selected_date"] = date
-
-        # show reset button and also changing in some tags appearence
-        render_dict["reset_available"] = True
-
-        # needed for advertising lineup evaluation app
-        render_dict["switch"] = switch
+            render_dict["no_dates"] = True
+            render_dict["home"] = home
+            render_dict["visitor"] = visitor
+            render_dict["selected_date"] = date
+            render_dict["reset_available"] = True
 
     elif "sort" in request.POST:
         home = request.session["home"]
