@@ -83,7 +83,6 @@ def analytics(request):
         data = table.to_numpy()
         data = data_showoff(data)
         
-        
         # session savings
         request.session["table"] = table.to_dict()
         request.session["switch"] = switch
@@ -132,8 +131,12 @@ def analytics(request):
     # just checking reset button clicking is enough to reset all to first form
     elif "reset" in request.POST:
         # but in case of assurance we also delete session data
-        del request.session["home"]
-        del request.session["visitor"]
+        try:
+            del request.session["home"]
+            del request.session["visitor"]
+            del request.session["table"]
+        except KeyError:
+            pass
 
     return render(request, "analytics.html", render_dict)
 

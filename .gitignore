@@ -2,6 +2,7 @@
 /data
 /tables
 /reports
+/sessions
 /users
 /static/admin
 db.sqlite3

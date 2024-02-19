@@ -16,6 +16,9 @@ from dotenv import load_dotenv
 import os
 
 dotenv_path = os.path.join(os.getcwd(), ".env")
+session_path = os.path.join(os.getcwd(), "sessions")
+if not os.path.exists(session_path):
+    os.makedirs(session_path)
 
 load_dotenv(dotenv_path)
 
@@ -33,7 +36,6 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = bool(int(os.getenv("DEBUG")))
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "localhost", "82.115.19.109"]
-
 
 # Application definition
 
@@ -60,13 +62,13 @@ MIDDLEWARE = [
 
 # These lines are gonna avoid admin page to work properly when on 0.0.0.0 not 127.0.0.1
 # --------------------
-SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
+SESSION_ENGINE = "django.contrib.sessions.backends.file"
+SESSION_FILE_PATH = session_path
 # As a string
 # needs to be uncomment when site is on HTTPS protocole
 # SESSION_COOKIE_SAMESITE = "None" if DEBUG == False else "Lax"
 # SESSION_COOKIE_SECURE = False if DEBUG == True else True
 # --------------------
-
 
 CSRF_TRUSTED_ORIGINS = [
     "http://0.0.0.0",

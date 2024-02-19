@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect
+from django.core.serializers.json import DjangoJSONEncoder
+from numpy import dstack
 from scraper.tables_function import data_showoff
 from scraper.constants import show_table, lineup_show_table
 import pandas as pd
@@ -17,37 +19,35 @@ def report_render(request):
         teams.remove(".DS_Store")
 
     render_dict["teams"] = teams
-    
+
     if "find-data" in request.POST:
         team = request.POST["team"]
-        switch = "P" if request.POST["switch"] == "players" else "L"
-        
-        data_path = os.path.join(reports_path, team, f"{switch[0].upper()}SeasonalReport.csv")
-        if os.path.exists(data_path):
+        switch = request.POST["switch"]
 
-            table = pd.read_csv(data_path)
-            if switch[0] == "P":
-                table = table.reindex(columns=show_table)
-                # CAUTION: last 5min efficiencies should first become measured to be shown
-                table = table.drop(columns=table.filter(like="last").columns)
-            else:
-                table = table.reindex(columns=lineup_show_table)
+        data_path = os.path.join(reports_path, team, f"{switch.upper()[0]}SeasonalReport.csv")
+        table = pd.read_csv(data_path)
 
-            try:
-                table = table.drop(columns=table.filter(like="Unnamed").columns)
-            except:
-                pass
-
-            data = table.to_numpy()
-            data = data_showoff(data)
-            
-            request.session["table"] = table.to_dict()
-
-            render_dict["theaders"] = table.columns
-            render_dict["next_rows"] = data
-            render_dict["result"] = True
+        if switch == "players":
+            table = table.reindex(columns=show_table)
+            # CAUTION: last 5min efficiencies should first become measured to be shown
+            table = table.drop(columns=table.filter(like="last").columns)
         else:
-            render_dict["no_data"] = True
+            table = table.reindex(columns=lineup_show_table)
+
+        try:
+            table = table.drop(columns=table.filter(like="Unnamed").columns)
+        except:
+            pass
+        
+        data = table.to_numpy()
+        data = data_showoff(data)
+ 
+        request.session["table"] = table.to_dict()
+
+        render_dict["theaders"] = table.columns
+        render_dict["next_rows"] = data
+        render_dict["result"] = True
+        render_dict["selected_team"] = request.session["selected_team"] = team
 
     elif "sort" in request.POST:
         table = request.session["table"]
@@ -62,5 +62,14 @@ def report_render(request):
         render_dict["next_rows"] = data
         render_dict["result"] = True
         render_dict["selected_col"] = selected_col
+        render_dict["selected_team"] = request.session["selected_team"]
 
+    elif "reset" in request.POST:
+        try:
+            del request.session["table"]
+            del request.session["selected_team"]
+        except KeyError:
+            pass
+    
     return render(request, "season_reporter.html", render_dict)
+
