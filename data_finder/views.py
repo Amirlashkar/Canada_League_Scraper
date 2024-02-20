@@ -166,15 +166,28 @@ def lineup_eval(request):
 
         render_dict["home"] = home_team
         render_dict["visitor"] = visitor_team
+        HorV = "Home" if home_team.strip() == "Carleton" else "Visitor"
 
         match_tables_path = os.path.join(tables_path, home_team, visitor_team)
-        if os.path.exists(match_tables_path):
-            matches_date = [
-                date.replace("_", "/") for date in os.listdir(match_tables_path)
-            ]
-            render_dict["dates"] = matches_date
-            render_dict["reset_available"] = True
-        else:
+        try:
+            matches_date = os.listdir(match_tables_path)
+            if ".DS_Store" in matches_date:
+                matches_date.remove(".DS_Store")
+
+            match_tables_path = os.path.join(match_tables_path, matches_date[0], HorV, "LFinalTable.csv")
+
+            # this if statement is for the case if the match folders exists but not the file cause data was invalid to make tables of it
+            if os.path.exists(match_tables_path):
+                matches_date = [
+                    date.replace("_", "/") for date in matches_date
+                ]
+                render_dict["dates"] = matches_date
+                render_dict["reset_available"] = True
+            else:
+                render_dict["no_dates"] = True
+
+        # this exception is for the case if match folders totally doesn't exists
+        except FileNotFoundError:
             render_dict["no_dates"] = True
 
     elif "submit-match" in request.POST:

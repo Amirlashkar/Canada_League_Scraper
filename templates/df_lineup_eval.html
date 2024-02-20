@@ -69,12 +69,6 @@
           </label>
         </div>
       </div>
-      {% elif no_dates %}
-      <div class="row bring-center row-margin">
-        <label>
-          No such match found on database !
-        </label>
-      </div>
       {% endif %}
       {% if players %}
       <div class="row bring-center row-margin">
@@ -124,6 +118,13 @@
         </button>
         {% endif %}
       </div>
+      {% if no_dates %}
+      <div class="row bring-center row-margin">
+        <label>
+          No such match found on database !
+        </label>
+      </div>
+      {% endif %}
       {% if no_lineup %}
       <div class="row bring-center row-margin">
         <label>
