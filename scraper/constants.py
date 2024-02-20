@@ -88,6 +88,7 @@ show_table = [
 lineup_show_table = [
     "Lineup",
     "PtsScored",
+    "PtsConceded",
     "efficiency",
     "OffRtg",
     "DefRtg",

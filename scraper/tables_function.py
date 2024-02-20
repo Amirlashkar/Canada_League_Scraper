@@ -865,10 +865,10 @@ def create_pfinal_df(
                 globals()[f"quarter{q}_5min_eff"] = cal_eff(offense, defense, time)
 
                 if time == 0:
-                    globals()[f"quarter{q}_5min_eff"] = "Not in the time"
+                    globals()[f"quarter{q}_5min_eff"] = "N/A"
         else:
-            globals()["quarter2_5min_eff"] = "Not in the time"
-            globals()["quarter4_5min_eff"] = "Not in the time"
+            globals()["quarter2_5min_eff"] = "N/A"
+            globals()["quarter4_5min_eff"] = "N/A"
 
         minutes = seconds / 60
         minutes = "{:.2f}".format(minutes.to_list()[0])
