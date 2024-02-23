@@ -1,1 +1,36 @@
+p {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
 
+label {
+  margin-bottom: 0 !important;
+}
+
+.caution-p {
+  margin-right: 5px;
+}
+
+.caution {
+  display: flex;
+  align-items: center;
+}
+
+.tool {
+  margin-top: 10px;
+  background-color: #050505;
+  border-radius: 10px;
+  border: solid 1px #464646;
+  font-family: "poppins";
+  padding: 30px;
+  color: white;
+}
+
+.tool:hover {
+  background-color: #464646;
+}
+
+.tool-btn {
+  background-color: #050505;
+  color: white;
+}

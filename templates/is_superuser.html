@@ -1,28 +1,66 @@
 {% extends './base.html' %}
 {% block title %} Superuser Confirmation {% endblock %}
 {% block content %}
+{% load static %}
+<head>
+  <link type="text/css" rel="stylesheet" href="{% static 'css/analytics.css' %}"/>
+  <link type="text/css" rel="stylesheet" href="{% static 'css/is_superuser.css' %}"/>
+  <link type="text/css" rel="stylesheet" href="{% static 'css/binary_switch.css' %}"/>
+</head>
 <body>
-  <h1>
-    <p>
-      Are you a superuser? <span>{{is_superuser}}</span>
-      {% if is_superuser == 'False' %}
-      <p>
-        If you think you are one, click this: <span><a href="admin">admin login</a></span>
-      </p>
+  <form action="" method="post">
+    {% csrf_token %}
+    <div class="col-md-6 offset-md-3 main-panel">
+      <div class="row col-md-6 offset-md-3 bring-center caution">
+        {% if is_superuser == 'True' %}
+        <input type="submit" id="admin_link" name="logout" hidden>
+        {% else %}
+        <a href="admin" id="admin_link" hidden></a>
+        {% endif %}
+        <p class="caution-p">Are You Superuser?</p>
+        <div class="toggle">
+          <input type="checkbox" id="btn"
+          {% if is_superuser == 'True' %}
+          checked
+          {% endif %}
+          >
+          <label for="btn">
+            <span class="thumb"></span>
+          </label>
+          <div class="light"></div>
+        </div>
+      </div>
+      {% if is_superuser == 'True' %}
+      {% if not data_finder and not season%}
+      <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" name="data_finder">
+        Data Finder
+      </button>
+      <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" name="season">
+        Season Reporter
+      </button>
       {% else %}
-      <p>
-      Visit our basketball league <a href="{% url 'df_analytics' %}">Analytics Finder</a> or 
-      <a href="{% url 'df_lineup_eval' %}">Lineup Evaluator</a> or 
-      <a href="{% url 'sr_analytics' %}">Season Reporter</a>
-      </p>
-      <p>
-      <form action="{% url 'logout' %}" method="post">
-          {% csrf_token %}
-          <input type="submit" value="Logout">
-      </form>
-      </p>
+      <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" 
+        {% if data_finder %}
+        name="df_analytics"
+        {% else %}
+        name="sr_analytics"
+        {% endif %}
+        >
+        Analytics Finder
+      </button>
+      <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" 
+        {% if data_finder %}
+        name="df_lineup_eval"
+        {% else %}
+        name="sr_lineup_eval"
+        {% endif %}
+        >
+        Lineup Evaluation
+      </button>
       {% endif %}
-    </p>
-  </h1>
+      {% endif %}
+    </div>
+  </form>
+  <script type="text/javascript" src="{% static 'js/binary_switch.js' %}"></script>
 </body>
 {% endblock %}

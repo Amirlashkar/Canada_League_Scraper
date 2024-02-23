@@ -1,4 +1,5 @@
 from django.shortcuts import redirect, render
+from django.contrib.auth import logout
 from scraper.scraper_functions import *
 from scraper.tables_function import list_players, data_showoff
 from scraper.constants import show_table, lineup_show_table
@@ -14,9 +15,28 @@ inventory_csv = pd.read_csv(inventory_path)
 
 def is_superuser(request):
     # This functions checks if user is admin or not
-    return render(
-        request, "is_superuser.html", {"is_superuser": str(request.user.is_superuser)}
-    )
+    
+    stuck_keys = "".join(list(request.POST.keys()))
+    render_dict = {"is_superuser":str(request.user.is_superuser)}
+    if "data_finder" in request.POST:
+        render_dict["data_finder"] = True
+
+    elif "season" in request.POST:
+        render_dict["season"] = True
+
+    elif "analytics" in stuck_keys or "lineup_eval" in stuck_keys:
+        for k in request.POST:
+            if "analytics" in k or "lineup_eval" in k:
+                req = k
+                break
+                
+        return redirect(req)
+    
+    elif "logout" in request.POST:
+        logout(request)
+        del render_dict["is_superuser"]
+
+    return render(request, "is_superuser.html", render_dict)
 
 
 def analytics(request):
