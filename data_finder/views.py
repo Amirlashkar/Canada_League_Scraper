@@ -61,7 +61,7 @@ def analytics(request):
         # saving selected teams on django sessions also
         home_team = request.session["home"] = request.POST["home-team"]
         visitor_team = request.session["visitor"] = request.POST["visitor-team"]
-        HV = render_dict["HV"] = request.session["hv"] = request.POST["hv"]
+        HV = render_dict["HV"] = request.session["HV"] = request.POST["hv"]
 
         # selected teams would be shown as static html tags after the condition button selected not as dropdowns
         render_dict["home"] = home_team
@@ -89,7 +89,7 @@ def analytics(request):
         date = request.session["selected_date"] = request.POST["date"].replace("/", "_")
         
         # getting selected data
-        HV = render_dict["HV"] = request.session["hv"]
+        HV = render_dict["HV"] = request.session["HV"]
         PL = request.POST["pl"]
         table_path = os.path.join(tables_path, home, visitor, date, HV, f"{PL.upper()[0]}FinalTable.csv")
         if os.path.exists(table_path):
