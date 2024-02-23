@@ -27,7 +27,7 @@ Seasonal Analytics
       <h4>Find seasonal data</h4>
       <hr class="line">
       {% if not result %}
-      <div class="row bring-center">
+      <div class="row bring-center row-margin">
         <div class="col-md-6">
           <p>Team</p>
           <select name="team">
@@ -51,8 +51,8 @@ Seasonal Analytics
           <rect id="noise-rect" filter='url(#noiseFilter)' />
         </svg>
 
-        <input type="hidden" name="switch" id="switch" value="lineups">
-        <div id="dynamic" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
+        <input type="hidden" name="pl" id="pl" value="lineups">
+        <div id="dynamic_pl" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
           <div class="toggle">
             <div class="detail"></div>
             <div class="detail"></div>

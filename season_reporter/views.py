@@ -20,12 +20,12 @@ def analytics(request):
 
     if "find-data" in request.POST:
         team = request.POST["team"]
-        switch = request.POST["switch"]
+        PL = request.POST["pl"]
 
-        data_path = os.path.join(reports_path, team, f"{switch.upper()[0]}SeasonalReport.csv")
+        data_path = os.path.join(reports_path, team, f"{PL.upper()[0]}SeasonalReport.csv")
         table = pd.read_csv(data_path)
 
-        if switch == "players":
+        if PL == "players":
             table = table.reindex(columns=show_table)
             # CAUTION: last 5min efficiencies should first become measured to be shown
             table = table.drop(columns=table.filter(like="last").columns)

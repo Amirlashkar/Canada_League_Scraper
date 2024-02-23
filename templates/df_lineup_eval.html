@@ -5,6 +5,7 @@
 
 <head>
   <link type="text/css" rel="stylesheet" href="{% static 'css/analytics.css' %}" />
+  <link type="text/css" rel="stylesheet" href="{% static 'css/switch.css' %}"/>
 </head>
 
 <body>
@@ -19,8 +20,8 @@
     <div class="col-md-6 offset-md-3 center main-panel">
       <h4 class="row bring-center">Specify match info</h4>
       <hr class="line">
-      <div class="row bring-center">
-        <div class="col-md-6">
+      <div class="row bring-center row-margin">
+        <div class="col-md-4">
           <p>Home</p>
           {% if reset_available %}
           <label class="bring-center">
@@ -34,7 +35,40 @@
           </select>
           {% endif %}
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
+          {% if not HV %}
+          <div class="row bring-center">
+            <p>Choose Side</p>
+          </div>
+          <div class="row bring-center">
+            <svg id="noise-svg">
+              <filter id='noiseFilter'>
+                <feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch' />
+              </filter>
+              <rect id="noise-rect" filter='url(#noiseFilter)' />
+            </svg>
+            
+            <input type="hidden" name="hv" id="hv" value="Visitor">
+            <div id="dynamic_hv" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
+              <div class="toggle">
+                <div class="detail"></div>
+                <div class="detail"></div>
+                <div class="detail"></div>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <div class="row bring-center">
+            <p>Chosen Side</p>
+          </div>
+          <div class="row bring-center">
+            <label class="bring-center">
+              {{HV}}
+            </label>
+          </div>
+          {% endif %}
+        </div>
+        <div class="col-md-4">
           <p>Visitor</p>
           {% if reset_available %}
           <label class="bring-center">
@@ -50,7 +84,7 @@
         </div>
       </div>
       {% if dates %}
-      <div class="row bring-center">
+      <div class="row bring-center row-margin">
         <div class="col-md-6">
           <p>Dates</p>
           <select name="date">
@@ -61,7 +95,7 @@
         </div>
       </div>
       {% elif selected_date %}
-      <div class="row bring-center">
+      <div class="row bring-center row-margin">
         <div class="col-md-6">
           <p>Date</p>
           <label class="bring-center">
@@ -169,5 +203,6 @@
     {% endif %}
   </form>
   <script type="text/javascript" src="{% static 'js/lineup_eval.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/switch.js' %}"></script>
 </body>
 {% endblock %}

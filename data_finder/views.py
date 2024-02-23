@@ -61,6 +61,7 @@ def analytics(request):
         # saving selected teams on django sessions also
         home_team = request.session["home"] = request.POST["home-team"]
         visitor_team = request.session["visitor"] = request.POST["visitor-team"]
+        HV = render_dict["HV"] = request.session["hv"] = request.POST["hv"]
 
         # selected teams would be shown as static html tags after the condition button selected not as dropdowns
         render_dict["home"] = home_team
@@ -88,14 +89,14 @@ def analytics(request):
         date = request.session["selected_date"] = request.POST["date"].replace("/", "_")
         
         # getting selected data
-        HorV = "Home" if home.strip() == "Carleton" else "Visitor"
-        switch = request.POST["switch"]
-        table_path = os.path.join(tables_path, home, visitor, date, HorV, f"{switch.upper()[0]}FinalTable.csv")
+        HV = render_dict["HV"] = request.session["hv"]
+        PL = request.POST["pl"]
+        table_path = os.path.join(tables_path, home, visitor, date, HV, f"{PL.upper()[0]}FinalTable.csv")
         if os.path.exists(table_path):
             table = pd.read_csv(table_path)
 
             # choosing showing tables to user
-            if switch == "players":
+            if PL == "players":
                 table = table.reindex(columns=show_table)
             else:
                 table = table.reindex(columns=lineup_show_table)
@@ -106,7 +107,7 @@ def analytics(request):
             
             # session savings
             request.session["table"] = table.to_dict()
-            request.session["switch"] = switch
+            request.session["PL"] = PL
 
             # main content
             render_dict["next_rows"] = data
@@ -124,7 +125,7 @@ def analytics(request):
             render_dict["reset_available"] = True
 
             # needed for advertising lineup evaluation app
-            render_dict["switch"] = switch
+            render_dict["PL"] = PL
 
         else:
             render_dict["no_dates"] = True
@@ -153,7 +154,8 @@ def analytics(request):
         render_dict["next_rows"] = data
         render_dict["reset_available"] = True
         render_dict["result"] = True
-        render_dict["switch"] = request.session["switch"]
+        render_dict["PL"] = request.session["PL"]
+        render_dict["HV"] = request.session["HV"]
         render_dict["selected_col"] = selected_col
 
     # just checking reset button clicking is enough to reset all to first form
@@ -163,6 +165,8 @@ def analytics(request):
             del request.session["home"]
             del request.session["visitor"]
             del request.session["table"]
+            del request.session["PL"]
+            del request.session["HV"]
         except KeyError:
             pass
 
@@ -186,7 +190,7 @@ def lineup_eval(request):
 
         render_dict["home"] = home_team
         render_dict["visitor"] = visitor_team
-        HorV = "Home" if home_team.strip() == "Carleton" else "Visitor"
+        HV = render_dict["HV"] = request.session["HV"] = request.POST["hv"]
 
         match_tables_path = os.path.join(tables_path, home_team, visitor_team)
         try:
@@ -194,7 +198,7 @@ def lineup_eval(request):
             if ".DS_Store" in matches_date:
                 matches_date.remove(".DS_Store")
 
-            match_tables_path = os.path.join(match_tables_path, matches_date[0], HorV, "LFinalTable.csv")
+            match_tables_path = os.path.join(match_tables_path, matches_date[0], HV, "LFinalTable.csv")
 
             # this if statement is for the case if the match folders exists but not the file cause data was invalid to make tables of it
             if os.path.exists(match_tables_path):
@@ -220,11 +224,11 @@ def lineup_eval(request):
         file_path = os.path.join(os.path.dirname(inventory_path), filename)
         raw_data = pd.read_csv(file_path)
         
-        # declaring HorV variable to get right list of player for Carleton ;
+        # declaring HV variable to get right list of player for Carleton ;
         # this line should be changed if data analyze is implemented on all teams
-        HorV = "Home" if "Carleton" in home else "Visitor"
+        HV = render_dict["HV"] = request.session["HV"]
         # a function to get players list out of first row on raw dataframe
-        players, _ = list_players(raw_data, 0, HorV)
+        players, _ = list_players(raw_data, 0, HV)
 
         render_dict["players"] = request.session["players"] = players
         render_dict["home"] = home
@@ -238,8 +242,8 @@ def lineup_eval(request):
         visitor = request.session["visitor"]
         date = request.session["date"]
 
-        HorV = "Home" if home.strip() == "Carleton" else "Visitor"
-        lineup_table_path = os.path.join(tables_path, home, visitor, date, HorV, "LFinalTable.csv")
+        HV = render_dict["HV"] = request.session["HV"]
+        lineup_table_path = os.path.join(tables_path, home, visitor, date, HV, "LFinalTable.csv")
         lineup_table = pd.read_csv(lineup_table_path)
         
         # taking chosen players on template into a list
@@ -279,6 +283,7 @@ def lineup_eval(request):
             del request.session["home"]
             del request.session["visitor"]
             del request.session["date"]
+            del request.session["HV"]
         except:
             pass
 

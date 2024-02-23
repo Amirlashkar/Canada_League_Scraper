@@ -25,8 +25,8 @@ Analytics Finder
     <div class="col-md-6 offset-md-3 center main-panel">
       <h4>Specify match info</h4>
       <hr class="line">
-      <div class="row bring-center">
-        <div class="col-md-6">
+      <div class="row bring-center row-margin">
+        <div class="col-md-4">
           <p>Home</p>
           {% if reset_available %}
           <label class="bring-center">
@@ -40,7 +40,40 @@ Analytics Finder
           </select>
           {% endif %}
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
+          {% if not HV %}
+          <div class="row bring-center">
+            <p>Choose Side</p>
+          </div>
+          <div class="row bring-center">
+            <svg id="noise-svg">
+              <filter id='noiseFilter'>
+                <feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch' />
+              </filter>
+              <rect id="noise-rect" filter='url(#noiseFilter)' />
+            </svg>
+            
+            <input type="hidden" name="hv" id="hv" value="Visitor">
+            <div id="dynamic_hv" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
+              <div class="toggle">
+                <div class="detail"></div>
+                <div class="detail"></div>
+                <div class="detail"></div>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <div class="row bring-center">
+            <p>Chosen Side</p>
+          </div>
+          <div class="row bring-center">
+            <label class="bring-center">
+              {{HV}}
+            </label>
+          </div>
+          {% endif %}
+        </div>
+        <div class="col-md-4">
           <p>Visitor</p>
           {% if reset_available %}
           <label class="bring-center">
@@ -56,7 +89,7 @@ Analytics Finder
         </div>
       </div>
       {% if selected_date %}
-      <div class="row bring-center">
+      <div class="row bring-center row-margin">
         <div class="col-md-6">
           <p>Date</p>
           <label class="bring-center">
@@ -66,7 +99,7 @@ Analytics Finder
       </div>
       {% endif %}
       {% if dates %}
-      <div class="row bring-center">
+      <div class="row bring-center row-margin">
         <div class="col-md-6">
           <p>Dates</p>
           <select name="date">
@@ -90,8 +123,8 @@ Analytics Finder
           <rect id="noise-rect" filter='url(#noiseFilter)' />
         </svg>
         
-        <input type="hidden" name="switch" id="switch" value="lineups">
-        <div id="dynamic" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
+        <input type="hidden" name="pl" id="pl" value="lineups">
+        <div id="dynamic_pl" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
           <div class="toggle">
             <div class="detail"></div>
             <div class="detail"></div>
@@ -189,7 +222,7 @@ Analytics Finder
           {% endfor %}
         </tbody>
       </table>
-      {% if switch == 'lineups' %}
+      {% if PL == 'lineups' %}
       <h3 class="row-margin"><a href="{% url 'df_lineup_eval' %}">Use Lineup Evaluation App</a></h3>
       {% endif %}
     </div>
