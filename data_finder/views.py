@@ -127,12 +127,18 @@ def analytics(request):
             # needed for advertising lineup evaluation app
             render_dict["PL"] = PL
 
+            # events link would be available
+            render_dict["events"] = True
+
         else:
             render_dict["no_dates"] = True
             render_dict["home"] = home
             render_dict["visitor"] = visitor
             render_dict["selected_date"] = date
             render_dict["reset_available"] = True
+
+    elif "events" in request.POST:
+        return redirect("df_events")
 
     elif "sort" in request.POST:
         home = request.session["home"]
@@ -157,6 +163,7 @@ def analytics(request):
         render_dict["PL"] = request.session["PL"]
         render_dict["HV"] = request.session["HV"]
         render_dict["selected_col"] = selected_col
+        render_dict["events"] = True
 
     # just checking reset button clicking is enough to reset all to first form
     elif "reset" in request.POST:
@@ -171,6 +178,65 @@ def analytics(request):
             pass
 
     return render(request, "df_analytics.html", render_dict)
+
+
+def events(request):
+    render_dict = {
+        "home": request.session["home"],
+        "visitor": request.session["visitor"],
+        "selected_date": request.session["selected_date"].replace("_", "/"),
+        "HV": request.session["HV"],
+    }
+    
+    if "find-events" in request.POST:
+        PL = request.POST["pl"]
+        HV = request.session["HV"]
+        table_path = os.path.join(tables_path,
+                                  request.session["home"],
+                                  request.session["visitor"],
+                                  request.session["selected_date"],
+                                  HV,
+                                  f"{PL.upper()[0]}AllEvents.csv")
+        
+        table = pd.read_csv(table_path)
+        try:
+            table = table.drop(columns=table.filter(like="poss").columns)
+        except:
+            pass
+
+        try:
+            table = table.drop(columns=table.filter(like="Unnamed").columns)
+        except:
+            pass
+
+        data = table.to_numpy()
+        data = data_showoff(data)
+
+        request.session["table"] = table.to_dict()
+
+        render_dict["theaders"] = table.columns
+        render_dict["next_rows"] = data
+        render_dict["result"] = True
+
+    elif "back" in request.POST:
+        return redirect("df_analytics")
+
+    elif "sort" in request.POST:
+        table = request.session["table"]
+        table = pd.DataFrame(table)
+        selected_col = request.POST["sort"]
+
+        data = table.sort_values(by=selected_col, ascending=False)
+        data = data.to_numpy()
+        data = data_showoff(data)
+
+        render_dict["theaders"] = table.columns
+        render_dict["next_rows"] = data
+        render_dict["reset_available"] = True
+        render_dict["result"] = True
+        render_dict["selected_col"] = selected_col
+
+    return render(request, "df_events.html", render_dict)
 
 
 def lineup_eval(request):

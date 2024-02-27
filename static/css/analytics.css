@@ -193,3 +193,7 @@ table {
 .hover-btn:hover .hidden-img {
   opacity: 1;
 }
+
+.events {
+  margin-top: 60px;
+}

@@ -68,6 +68,7 @@ def analytics(request):
             del request.session["selected_team"]
         except KeyError:
             pass
+
     
     return render(request, "sr_analytics.html", render_dict)
 
