@@ -96,3 +96,9 @@ lineup_show_table = [
     "minutes",
 ]
 # ------------------------------
+
+# dropping columns of events
+events_drop = [
+    "enters the game",
+    "goes to the bench",
+]

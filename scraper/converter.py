@@ -17,7 +17,6 @@ class Converter:
     async def data2table(self, filename):
         invalids = 0
         for HorV in ("Home", "Visitor"):
-            await asyncio.sleep(0)
             # if "Carleton" in filename:
             print(filename, "--->", HorV)
             splitted_name = filename.replace(".csv", "")
@@ -42,7 +41,7 @@ class Converter:
                     events_df5min,
                     time_score_df5min,
                     eff_columns,
-                ) = await main_loop(raw_df, HorV, self.custom_min)
+                ) = main_loop(raw_df, HorV, self.custom_min)
 
             except ValueError:
                 invalids += 1

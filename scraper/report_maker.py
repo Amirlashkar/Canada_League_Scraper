@@ -1,6 +1,7 @@
 import pandas as pd
 import os, difflib, ast
 from tables_function import cal_eff, cal_rtg
+import asyncio
 
 
 class Reporter:
@@ -24,6 +25,7 @@ class Reporter:
         playername: name which we're going to compare it
         players_list: list which we're comparing playername with it
         """
+
         found = difflib.get_close_matches(playername, players_list, n=1, cutoff=0.0)[0]
         matcher = difflib.SequenceMatcher(None, playername, found)
         diff_ratio = matcher.ratio()
@@ -57,7 +59,6 @@ class Reporter:
         for i in range(2):
             if LP == "P":
                 for ind, row in df.iterrows():
-                    print("#", end="", flush=True)
                     playername = row["Player Name"]
                     comparing_ls = players.copy()
                     comparing_ls.remove(playername)
@@ -70,7 +71,6 @@ class Reporter:
             else:
                 for ind, row in df.iterrows():
                     for i, player in enumerate(row["Lineup"]):
-                        print("#", end="", flush=True)
                         comparing_ls = players.copy()
                         comparing_ls.remove(player)
 
@@ -88,14 +88,16 @@ class Reporter:
 
         return df
 
-
-    def measure_report(self, dfs_ls:list):
+    async def measure_report(self, dfs_dict:dict):
         """
         the function sticks dataframes of a team from all season wide and sums up players statistic together and also adds new columns
-        dfs_ls: list of an specific team dataframes from all over season
+        dfs_ls: dictionary of an specific team dataframes from all over season
         """
-        for each in range(len(dfs_ls)):
-            concat_df = pd.concat(dfs_ls[each])
+
+        dfs = []
+        for key in dfs_dict:
+            print(key)
+            concat_df = pd.concat(dfs_dict[key])
 
             try:
                 # CAUTION: last 5min efficiencies should be somehow filtered of "Not in the time" first and then 
@@ -105,99 +107,149 @@ class Reporter:
                 summed_df = concat_df.groupby(["Lineup"]).sum()
 
             summed_df = summed_df.reset_index()
-            LP = "P" if each == 0 else "L"
-            summed_df = self.mix_similars(summed_df, LP)
+            LP = key[0]
+            summed_df = await asyncio.to_thread(self.mix_similars, summed_df, LP)
 
-            summed_df["Eff"] = summed_df.apply(lambda row: cal_eff(row["total off possession"],
-                                                                row["total def possession"],
-                                                                row["minutes"]), axis=1)
-            
-            if LP == "P":
-                ptsKey = "realPtsScored"
-            else:
-                ptsKey = "PtsScored"
-            summed_df["OffRtg"] = summed_df.apply(lambda row: cal_rtg(row[ptsKey],
-                                                                row["total off possession"]), axis=1)
+            if "E" not in key:
+                summed_df["Eff"] = summed_df.apply(lambda row: cal_eff(row["total off possession"],
+                                                                    row["total def possession"],
+                                                                    row["minutes"]), axis=1)
+                
+                if LP == "P":
+                    ptsKey = "realPtsScored"
+                else:
+                    ptsKey = "PtsScored"
 
-            summed_df["DefRtg"] = summed_df.apply(lambda row: cal_rtg(row["PtsConceded"],
-                                                                row["total def possession"]), axis=1)
+                summed_df["OffRtg"] = summed_df.apply(lambda row: cal_rtg(row[ptsKey],
+                                                                    row["total off possession"]), axis=1)
 
-            summed_df["NetRtg"] = summed_df["OffRtg"] - summed_df["DefRtg"]
+                summed_df["DefRtg"] = summed_df.apply(lambda row: cal_rtg(row["PtsConceded"],
+                                                                    row["total def possession"]), axis=1)
 
-            yield summed_df
+                summed_df["NetRtg"] = summed_df["OffRtg"] - summed_df["DefRtg"]
 
-    def report(self):
+            dfs.append(summed_df)
+
+        return dfs
+
+    async def fill_team_dict(self, home):
+        await asyncio.sleep(0)
+        home_path = os.path.join(self.tables_path, home)
+        visitor_teams = os.listdir(home_path)
+        try:
+            visitor_teams.remove(".DS_Store")
+        except:
+            pass
+        for visitor in visitor_teams:
+            visitor_path = os.path.join(home_path, visitor)
+            dates = os.listdir(visitor_path)
+            try:
+                dates.remove(".DS_Store")
+            except:
+                pass
+            for date in dates:
+                for HorV in ("Home", "Visitor"):
+                    teamname = home if HorV == "Home" else visitor
+                    try:
+                        final_table_path = os.path.join(home_path, visitor, date, HorV, "PFinalTable.csv")
+                        final_table = pd.read_csv(final_table_path)
+
+                        lineup_table_path = os.path.join(home_path, visitor, date, HorV, "LFinalTable.csv")
+                        lineup_table = pd.read_csv(lineup_table_path)
+
+                        Pevents_table_path = os.path.join(home_path, visitor, date, HorV, "PAllEvents.csv")
+                        Pevents_table = pd.read_csv(Pevents_table_path)
+
+                        Levents_table_path = os.path.join(home_path, visitor, date, HorV, "LAllEvents.csv")
+                        Levents_table = pd.read_csv(Levents_table_path)
+
+                        print(f"{home} VS {visitor} at {date} --> {HorV}")
+
+                    except FileNotFoundError:
+                        print("Table not found!")
+                        break
+                    
+                    # create team key if it doesn't exist on teams_dict
+                    if teamname not in self.teams_dict:
+                        self.teams_dict[teamname] = {
+                            "P":[],
+                            "L":[],
+                            "PE":[],
+                            "LE":[],
+                        }
+                    
+                    # dropping unneccessary columns
+                    try:
+                        drops = ["date", "game_type", "home/visitor", 
+                                "opponent", "OffRtg", "DefRtg",
+                                "NetRtg", "global efficiency", "quarter2 last 5min efficiency",
+                                "quarter4 last 5min efficiency"]
+
+                        final_table = final_table.drop(drops, axis=1)
+                        final_table = final_table.drop(columns=final_table.filter(like="Unnamed").columns)
+                    except:
+                        pass
+
+                    self.teams_dict[teamname]["P"].append(final_table)
+                    self.teams_dict[teamname]["L"].append(lineup_table)
+                    self.teams_dict[teamname]["PE"].append(Pevents_table)
+                    self.teams_dict[teamname]["LE"].append(Levents_table)
+        
+    async def team_report(self, team):
+        await asyncio.sleep(0)
+        team_report_path = os.path.join(self.reports_path, team)
+        if not os.path.exists(team_report_path):
+            os.makedirs(team_report_path)
+        
+        print(team, "started")
+
+        try:
+            team_data = await asyncio.create_task(self.measure_report(self.teams_dict[team]))
+
+            print(team, "ended")
+            for i, df in enumerate(team_data):
+                if i == 0:
+                    players_report = df
+                elif i == 1:
+                    lineup_report = df
+                elif i == 2:
+                    Pevents_report = df
+                else:
+                    Levents_report = df
+
+            players_path = os.path.join(team_report_path, "PSeasonalReport.csv")
+            lineup_path = os.path.join(team_report_path, "LSeasonalReport.csv")
+            Pevents_path = os.path.join(team_report_path, "PEventsSeasonalReport.csv")
+            Levents_path = os.path.join(team_report_path, "LEventsSeasonalReport.csv")
+            players_report.to_csv(players_path)
+            lineup_report.to_csv(lineup_path)
+            Pevents_report.to_csv(Pevents_path)
+            Levents_report.to_csv(Levents_path)
+
+        except ValueError:
+            pass
+
+    async def report(self):
 
         existing_teams = os.listdir(self.tables_path)
         try:
             existing_teams.remove(".DS_Store")
         except:
             pass
-
+        
+        homes_task = []
         for home in existing_teams:
-            home_path = os.path.join(self.tables_path, home)
-            visitor_teams = os.listdir(home_path)
-            try:
-                visitor_teams.remove(".DS_Store")
-            except:
-                pass
-            for visitor in visitor_teams:
-                visitor_path = os.path.join(home_path, visitor)
-                dates = os.listdir(visitor_path)
-                try:
-                    dates.remove(".DS_Store")
-                except:
-                    pass
-                for date in dates:
-                    for HorV in ("Home", "Visitor"):
-                        teamname = home if HorV == "Home" else visitor
-                        try:
-                            final_table_path = os.path.join(home_path, visitor, date, HorV, "PFinalTable.csv")
-                            final_table = pd.read_csv(final_table_path)
+            task = self.fill_team_dict(home)
+            homes_task.append(task)
 
-                            lineup_table_path = os.path.join(home_path, visitor, date, HorV, "LFinalTable.csv")
-                            lineup_table = pd.read_csv(lineup_table_path)
+        await asyncio.gather(*homes_task)
 
-                            print(f"{home} VS {visitor} at {date} --> {HorV}")
-
-                        except FileNotFoundError:
-                            print("Table not found!")
-                            break
-                        
-                        # create team key if it doesn't exist on teams_dict
-                        if teamname not in self.teams_dict:
-                            self.teams_dict[teamname] = [[], []]
-                        
-                        # dropping unneccessary columns
-                        try:
-                            drops = ["date", "game_type", "home/visitor", 
-                                    "opponent", "OffRtg", "DefRtg",
-                                    "NetRtg", "global efficiency", "quarter2 last 5min efficiency",
-                                    "quarter4 last 5min efficiency"]
-
-                            final_table = final_table.drop(drops, axis=1)
-                            final_table = final_table.drop(columns=final_table.filter(like="Unnamed").columns)
-                        except:
-                            pass
-
-                        self.teams_dict[teamname][0].append(final_table)
-                        self.teams_dict[teamname][1].append(lineup_table)
-
+        teams_task = []
         for team in self.teams_dict:
-            team_report_path = os.path.join(self.reports_path, team)
-            if not os.path.exists(team_report_path):
-                os.makedirs(team_report_path)
-            
-            # players_report = self.measure_report(self.teams_dict[team])
-            for i, df in enumerate(self.measure_report(self.teams_dict[team])):
-                if i == 0:
-                    players_report = df
-                else:
-                    lineup_report = df
-
-            players_report_path = os.path.join(team_report_path, "PSeasonalReport.csv")
-            lineup_report_path = os.path.join(team_report_path, "LSeasonalReport.csv")
-            players_report.to_csv(players_report_path) ; lineup_report.to_csv(lineup_report_path)
+            task = self.team_report(team)
+            teams_task.append(task)
+        
+        await asyncio.gather(*teams_task)
 
 reporter = Reporter()
-reporter.report()
+asyncio.run(reporter.report())

@@ -289,7 +289,7 @@ async def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
     in_lineup = []
 
     not_changed_list = ["not_changed" for n in range(len(players_list))]
-    event_num_dict = {k: [] for k in ["player"] + event_list + ["off_poss", "def_poss"]}
+    event_num_dict = {k: [] for k in ["Player Name"] + event_list + ["off_poss", "def_poss"]}
     event_num_dict5min = {
         k: []
         for k in ["player"]
@@ -336,7 +336,7 @@ async def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
 
     lineup_time_dict = {k: [] for k in list(time_dict.keys())}
     lineup_time_dict["lineup"] = lineup_time_dict.pop("player")
-    lineup_event_dict = {k: [] for k in ["lineup"] + event_list}
+    lineup_event_dict = {k: [] for k in ["Lineup"] + event_list}
 
     for ind, row in df.iterrows():
         # 5min checking needs these constants
@@ -496,13 +496,13 @@ async def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
             ## possession counting for players
             if exactevent in pos_contrib:
                 for p in in_lineup:
-                    if p not in event_num_dict["player"]:
-                        event_num_dict["player"].append(p)
+                    if p not in event_num_dict["Player Name"]:
+                        event_num_dict["Player Name"].append(p)
                         for key in event_num_dict:
-                            if key != "player":
+                            if key != "Player Name":
                                 event_num_dict[key].append(0)
 
-                    p_ind = event_num_dict["player"].index(p)
+                    p_ind = event_num_dict["Player Name"].index(p)
                     event_num_dict["def_poss"][p_ind] += 1
 
         # -------------------------------------------
@@ -651,25 +651,25 @@ async def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
             # ------------------------------------------------------------------------------------------------------------------------------------------------------------
             ## filling event_num_dict for meaesuring how many times each event occured
             exactevent = row[f"{HorV[0]}_exactevent"]
-            if row[f"{HorV[0]}_player"] not in event_num_dict["player"]:
-                event_num_dict["player"].append(row[f"{HorV[0]}_player"])
+            if row[f"{HorV[0]}_player"] not in event_num_dict["Player Name"]:
+                event_num_dict["Player Name"].append(row[f"{HorV[0]}_player"])
                 for key in event_num_dict:
-                    if key != "player":
+                    if key != "Player Name":
                         event_num_dict[key].append(0)
 
-            player_index = event_num_dict["player"].index(row[f"{HorV[0]}_player"])
+            player_index = event_num_dict["Player Name"].index(row[f"{HorV[0]}_player"])
             event_num_dict[exactevent][player_index] += 1
 
             ## possession counting
             if exactevent in pos_contrib:
                 for p in in_lineup:
-                    if p not in event_num_dict["player"]:
-                        event_num_dict["player"].append(p)
+                    if p not in event_num_dict["Player Name"]:
+                        event_num_dict["Player Name"].append(p)
                         for key in event_num_dict:
-                            if key != "player":
+                            if key != "Player Name":
                                 event_num_dict[key].append(0)
 
-                    p_ind = event_num_dict["player"].index(p)
+                    p_ind = event_num_dict["Player Name"].index(p)
                     event_num_dict["off_poss"][p_ind] += 1
 
             if cur_time < threshold_time and quarter in (2, 4):
@@ -707,20 +707,20 @@ async def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
 
             # ---------------------
             # lineup event calculations
-            if len(lineup_event_dict["lineup"]) == 0:
-                lineup_event_dict["lineup"].append(sorted(in_lineup))
+            if len(lineup_event_dict["Lineup"]) == 0:
+                lineup_event_dict["Lineup"].append(sorted(in_lineup))
                 for key in lineup_event_dict:
-                    if key != "lineup":
+                    if key != "Lineup":
                         lineup_event_dict[key].append(0)
 
-            last_lineup = lineup_event_dict["lineup"][-1]
+            last_lineup = lineup_event_dict["Lineup"][-1]
             new_lineup = sorted(in_lineup.copy())
 
             if new_lineup == last_lineup:
                 lineup_event_dict[row[f"{HorV[0]}_exactevent"]][-1] += 1
             elif new_lineup != last_lineup and len(new_lineup) == 5:
                 for key in list(lineup_event_dict.keys()):
-                    if key == "lineup":
+                    if key == "Lineup":
                         lineup_event_dict[key].append(new_lineup)
                     else:
                         lineup_event_dict[key].append(0)
