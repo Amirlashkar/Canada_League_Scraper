@@ -15,9 +15,10 @@ class Converter:
             os.makedirs(match_dir)
 
     async def data2table(self, filename):
+        print("filename started")
+        await asyncio.sleep(0)
         invalids = 0
         for HorV in ("Home", "Visitor"):
-            # if "Carleton" in filename:
             print(filename, "--->", HorV)
             splitted_name = filename.replace(".csv", "")
             splitted_name = splitted_name.split("_")
@@ -41,21 +42,21 @@ class Converter:
                     events_df5min,
                     time_score_df5min,
                     eff_columns,
-                ) = main_loop(raw_df, HorV, self.custom_min)
+                ) = await asyncio.to_thread(main_loop, raw_df, HorV, self.custom_min)
+                print(filename, "main loop done")
 
             except ValueError:
                 invalids += 1
-                print("Invalid substitution data!")
+                print(filename, "Invalid substitution data!")
                 continue
             
             except IndexError:
                 invalids += 1
-                print("Empty Dataframe!")
+                print(filename, "Empty Dataframe!")
                 continue
 
-            eff_dict = create_eff_df(cusMin_df, eff_columns, self.custom_min)
-            eff_df = pd.DataFrame(eff_dict)
-            pfinal_table = create_pfinal_df(
+            eff_task = create_eff_df(cusMin_df, eff_columns, self.custom_min)
+            pfinal_task = create_pfinal_df(
                 raw_df,
                 HorV,
                 date,
@@ -65,10 +66,12 @@ class Converter:
                 time_score_df5min,
             )
             
-            lfinal_table = create_lfinal_df(
+            lfinal_task = create_lfinal_df(
                 raw_df, HorV, date, lineup_time_score_df, lineup_event_df
             )
-            lfinal_table = pd.DataFrame(lfinal_table)
+
+            tasks = [eff_task, pfinal_task, lfinal_task]
+            eff_df, pfinal_table, lfinal_table = await asyncio.gather(*tasks)
             
             cusMin_df.to_csv(os.path.join(match_dir, "CustomMinuteEvents.csv"))
             events_df.to_csv(os.path.join(match_dir, "PAllEvents.csv"))
@@ -81,6 +84,7 @@ class Converter:
             pfinal_table.to_csv(os.path.join(match_dir, "PFinalTable.csv"))
             lfinal_table.to_csv(os.path.join(match_dir, "LFinalTable.csv"))
 
+        print(filename, "finished")
         return invalids
 
     def get_tasks(self):

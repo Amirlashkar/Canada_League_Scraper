@@ -8,7 +8,7 @@ import pandas as pd
 pd.set_option("display.max_colwidth", None)
 from datetime import datetime
 from copy import deepcopy
-import re, ast, os, sys, difflib
+import re, ast, os, sys, difflib, asyncio
 
 addition_path = os.path.join(os.getcwd(), "scraper")
 sys.path.append(addition_path)
@@ -190,7 +190,7 @@ def initial_edit(df: pd.DataFrame, HorV: str) -> pd.DataFrame:
     return df
 
 
-def create_eff_df(cusMin_df:pd.DataFrame, eff_columns:list, custom_minute:float=1):
+async def create_eff_df(cusMin_df:pd.DataFrame, eff_columns:list, custom_minute:float=1):
     """
     creating effectiveness table from event dataframe separated by custom chunks of time ;
 
@@ -198,6 +198,7 @@ def create_eff_df(cusMin_df:pd.DataFrame, eff_columns:list, custom_minute:float=
     eff_columns: list of dynamic strings representing effectiveness dataframe columns each as tuple
     custom_minute: size of time chunks
     """
+    await asyncio.sleep(0)
 
     # creating effectiveness dataframe like a MultiIndex dataframe by usage of eff_columns
     eff_df = pd.DataFrame({key: [] for key in [("player", "player")] + eff_columns})
@@ -228,7 +229,7 @@ def create_eff_df(cusMin_df:pd.DataFrame, eff_columns:list, custom_minute:float=
     return eff_df
 
 
-async def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
+def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
     """
     This is the main part which creates time and events tables drived from raw table
 
@@ -777,8 +778,8 @@ async def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
         axis=1
     )
 
-    lineup_event_df["lineup"] = lineup_event_df["lineup"].apply(tuple)
-    lineup_event_df = lineup_event_df.groupby("lineup").sum().reset_index()
+    lineup_event_df["Lineup"] = lineup_event_df["Lineup"].loc[lineup_event_df["Lineup"] != 0].apply(tuple)
+    lineup_event_df = lineup_event_df.groupby("Lineup").sum().reset_index()
     lineup_time_score_df[("lineup", "lineup")] = lineup_time_score_df[
         ("lineup", "lineup")
     ].apply(tuple)
@@ -798,7 +799,7 @@ async def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
     )
 
 
-def create_pfinal_df(
+async def create_pfinal_df(
     df: pd.DataFrame,
     HorV: str,
     date:str,
@@ -808,6 +809,7 @@ def create_pfinal_df(
     time_score_df5min: pd.DataFrame,
 ) -> pd.DataFrame:
 
+    await asyncio.sleep(0)
     globals()["neg_contrib2"] = []
     globals()["neg_contrib4"] = []
     globals()["pos_contrib2"] = []
@@ -828,31 +830,31 @@ def create_pfinal_df(
             showing_pts += float(row[event] * score)
 
         points_scored = float(
-            time_score_df.loc[time_score_df[("player", "player")] == row["player"]][
+            time_score_df.loc[time_score_df[("player", "player")] == row["Player Name"]][
                 ("total", "pts")
             ].to_list()[0]
         )
         
         points_conceded = float(
-            time_score_df.loc[time_score_df[("player", "player")] == row["player"]][
+            time_score_df.loc[time_score_df[("player", "player")] == row["Player Name"]][
                 ("total", "ptc")
             ].to_list()[0]
         )
 
         seconds = time_score_df.loc[
-            time_score_df[("player", "player")] == row["player"]
+            time_score_df[("player", "player")] == row["Player Name"]
         ][("total", "seconds")]
         time = seconds.iloc[0]
         global_off_possession = row["off_poss"]
         global_def_possession = row["def_poss"]
         global_efficiency = cal_eff(global_off_possession, global_def_possession, time)
 
-        if row["player"] in events_df5min["player", "player"].tolist():
+        if row["Player Name"] in events_df5min["player", "player"].tolist():
             time_row5min = time_score_df5min.loc[
-                time_score_df5min["player", "player"] == row["player"]
+                time_score_df5min["player", "player"] == row["Player Name"]
             ]
             event_row5min = events_df5min.loc[
-                events_df5min["player", "player"] == row["player"]
+                events_df5min["player", "player"] == row["Player Name"]
             ]
             for q in [2, 4]:
                 time = time_row5min[f"quarter{q}", "seconds"].iloc[0]
@@ -892,7 +894,7 @@ def create_pfinal_df(
         net_rtg = "{:.3f}".format(net_rtg)
 
         new_row = {
-            "Player Name": [row["player"]],
+            "Player Name": [row["Player Name"]],
             "PtsScored": [showing_pts],
             "realPtsScored": [points_scored],
             "OffRtg": [off_rtg],
@@ -920,13 +922,14 @@ def create_pfinal_df(
     return player_final_table
 
 
-def create_lfinal_df(
+async def create_lfinal_df(
     df: pd.DataFrame,
     HorV: str,
     date:str,
     lineup_time_score_df: pd.DataFrame,
     lineup_event_df: pd.DataFrame,
 ) -> pd.DataFrame:
+    await asyncio.sleep(0)
     lineup_final_columns = final_columns.copy()
     if "Player Name" in lineup_final_columns:
         lineup_final_columns.remove("Player Name")
@@ -936,17 +939,17 @@ def create_lfinal_df(
     for index, row in lineup_event_df.iterrows():
         points_scored = float(
             lineup_time_score_df.loc[
-                lineup_time_score_df["lineup", "lineup"] == tuple(row["lineup"])
+                lineup_time_score_df["lineup", "lineup"] == tuple(row["Lineup"])
             ][("total", "pts")].to_list()[0]
         )
         points_conceded = float(
             lineup_time_score_df.loc[
-                lineup_time_score_df[("lineup", "lineup")] == tuple(row["lineup"])
+                lineup_time_score_df[("lineup", "lineup")] == tuple(row["Lineup"])
             ][("total", "ptc")].to_list()[0]
         )
 
         seconds = lineup_time_score_df.loc[
-            lineup_time_score_df[("lineup", "lineup")] == row["lineup"]
+            lineup_time_score_df[("lineup", "lineup")] == row["Lineup"]
         ][("total", "seconds")]
         time = seconds.iloc[0]
         global_off_possession = row[pos_contrib].sum()
@@ -980,7 +983,7 @@ def create_lfinal_df(
         )
 
         new_row = {
-            "Lineup": [row["lineup"]],
+            "Lineup": [row["Lineup"]],
             "PtsScored": [points_scored],
             "OffRtg": off_rtg,
             "DefRtg": def_rtg,
