@@ -191,12 +191,14 @@ def events(request):
     if "find-events" in request.POST:
         PL = request.POST["pl"]
         HV = request.session["HV"]
-        table_path = os.path.join(tables_path,
-                                  request.session["home"],
-                                  request.session["visitor"],
-                                  request.session["selected_date"],
-                                  HV,
-                                  f"{PL.upper()[0]}AllEvents.csv")
+        table_path = os.path.join(
+            tables_path,
+            request.session["home"],
+            request.session["visitor"],
+            request.session["selected_date"],
+            HV,
+            f"{PL.upper()[0]}AllEvents.csv"
+        )
         
         table = pd.read_csv(table_path)
         try:

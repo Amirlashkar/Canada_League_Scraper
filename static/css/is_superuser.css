@@ -12,6 +12,7 @@ label {
 }
 
 .caution {
+  padding: 15px;
   display: flex;
   align-items: center;
 }

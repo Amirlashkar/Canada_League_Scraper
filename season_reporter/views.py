@@ -19,7 +19,7 @@ def analytics(request):
     render_dict["teams"] = teams
 
     if "find-data" in request.POST:
-        team = request.POST["team"]
+        team = request.session["team"] = request.POST["team"]
         PL = request.POST["pl"]
 
         data_path = os.path.join(reports_path, team, f"{PL.upper()[0]}SeasonalReport.csv")
@@ -45,7 +45,11 @@ def analytics(request):
         render_dict["theaders"] = table.columns
         render_dict["next_rows"] = data
         render_dict["result"] = True
+        render_dict["events"] = True
         render_dict["selected_team"] = request.session["selected_team"] = team
+
+    elif "events" in request.POST:
+        return redirect("sr_events")
 
     elif "sort" in request.POST:
         table = request.session["table"]
@@ -59,6 +63,7 @@ def analytics(request):
         render_dict["theaders"] = table.columns
         render_dict["next_rows"] = data
         render_dict["result"] = True
+        render_dict["events"] = True
         render_dict["selected_col"] = selected_col
         render_dict["selected_team"] = request.session["selected_team"]
 
@@ -72,6 +77,57 @@ def analytics(request):
     
     return render(request, "sr_analytics.html", render_dict)
 
+
+def events(request):
+    render_dict = {}
+    
+    if "find-events" in request.POST:
+        PL = request.POST["pl"]
+        report_path = os.path.join(
+            reports_path,
+            request.session["team"],
+            f"{PL.upper()[0]}EventsSeasonalReport.csv",
+        )
+
+        report = pd.read_csv(report_path)
+        try:
+            report = report.drop(columns=report.filter(like="poss").columns)
+        except:
+            pass
+
+        try:
+            report = report.drop(columns=report.filter(like="Unnamed").columns)
+        except:
+            pass
+
+        data = report.to_numpy()
+        data = data_showoff(data)
+
+        request.session["report"] = report.to_dict()
+
+        render_dict["theaders"] = report.columns
+        render_dict["next_rows"] = data
+        render_dict["result"] = True
+
+    elif "back" in request.POST:
+        return redirect("sr_analytics")
+
+    elif "sort" in request.POST:
+        report = request.session["report"]
+        report = pd.DataFrame(report)
+        selected_col = request.POST["sort"]
+
+        data = report.sort_values(by=selected_col, ascending=False)
+        data = data.to_numpy()
+        data = data_showoff(data)
+
+        render_dict["theaders"] = report.columns
+        render_dict["next_rows"] = data
+        render_dict["reset_available"] = True
+        render_dict["result"] = True
+        render_dict["selected_col"] = selected_col
+
+    return render(request, "sr_events.html", render_dict)
 
 def lineup_eval(request):
     if not request.user.is_superuser:

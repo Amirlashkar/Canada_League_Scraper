@@ -1,9 +1,9 @@
 {% extends './base.html' %}
 {% block title %}
 {% if result %}
-{{home}} V {{visitor}} Events
+{{request.session.team}} Seasonal Events
 {% else %}
-Events Finder
+Seasonal Events Finder
 {% endif %}
 {% endblock %}
 {% block content %}
@@ -19,7 +19,7 @@ Events Finder
   <div class="title col-md-6 offset-md-3 row">
     <img class="analyze-icon" src="{% static 'icons/events.png' %}" width="32" height="32">
     <h1>
-      Events Finder
+      Seasonal Events Finder
     </h1>
   </div>
   <form action="" method="post">
@@ -28,34 +28,10 @@ Events Finder
       <h4>Choose Lineups or Players</h4>
       <hr class="line">
       <div class="row bring-center row-margin">
-        <div class="col-md-4">
-          <p>Home</p>
+        <div class="col-md-12">
+          <p>Team</p>
           <label class="bring-center">
-            {{home}}
-          </label>
-        </div>
-        <div class="col-md-4">
-          <div class="row bring-center">
-            <p>Chosen Side</p>
-          </div>
-          <div class="row bring-center">
-            <label class="bring-center">
-              {{HV}}
-            </label>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <p>Visitor</p>
-          <label class="bring-center">
-            {{visitor}}
-          </label>
-        </div>
-      </div>
-      <div class="row bring-center row-margin">
-        <div class="col-md-6">
-          <p>Date</p>
-          <label class="bring-center">
-            {{selected_date}}
+            {{request.session.team}}
           </label>
         </div>
       </div>

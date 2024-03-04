@@ -99,6 +99,18 @@ Seasonal Analytics
       </div>
       {% endif %}
     </div>
+    {% if events %}
+    <div class="col-md-2 offset-md-5 center main-panel events">
+      <div class="row bring-center">
+        <button class="row my-btn bring-center" name="events">
+          <img class="find-icon" src="{% static 'icons/events.png' %}" width="32" height="32">
+          <span class="find">
+            Match Events
+          </span>
+        </button>
+      </div>
+    </div>
+    {% endif %}
     {% if result %}
     <div class="col-md-10 offset-md-1 center main-panel result-panel">
       <table class="table-width" cellpadding="0" cellspacing="0" border="0">
