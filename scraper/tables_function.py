@@ -6,9 +6,14 @@ import numpy as np
 import pandas as pd
 
 pd.set_option("display.max_colwidth", None)
-from datetime import datetime
+import ast
+import asyncio
+import difflib
+import os
+import re
+import sys
 from copy import deepcopy
-import re, ast, os, sys, difflib, asyncio
+from datetime import datetime
 
 addition_path = os.path.join(os.getcwd(), "scraper")
 sys.path.append(addition_path)
@@ -83,7 +88,7 @@ def cal_rtg(points:int, possession:int) -> float:
     """
     calculates rating based on inputs.
 
-    points: may be PTScored or PTConceded
+    points: may be PtsScored or PtsConceded
     offense: number of offensive acts
     defense: number of defensive acts
     time: in-game time for a player that we are calculating his effectiveness
@@ -337,7 +342,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
 
     lineup_time_dict = {k: [] for k in list(time_dict.keys())}
     lineup_time_dict["lineup"] = lineup_time_dict.pop("player")
-    lineup_event_dict = {k: [] for k in ["Lineup"] + event_list}
+    lineup_event_dict = {k: [] for k in ["Lineup"] + event_list + ["off_poss", "def_poss"]}
 
     for ind, row in df.iterrows():
         # 5min checking needs these constants
@@ -505,6 +510,20 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
 
                     p_ind = event_num_dict["Player Name"].index(p)
                     event_num_dict["def_poss"][p_ind] += 1
+
+            last_lineup = lineup_event_dict["Lineup"][-1]
+            new_lineup = sorted(in_lineup.copy())
+
+            if new_lineup == last_lineup:
+                if row[f"{op_HorV[0]}_exactevent"] in pos_contrib:
+                    lineup_event_dict["def_poss"][-1] += 1
+
+            elif new_lineup != last_lineup and len(new_lineup) == 5:
+                for key in list(lineup_event_dict.keys()):
+                    if key == "Lineup":
+                        lineup_event_dict[key].append(new_lineup)
+                    else:
+                        lineup_event_dict[key].append(0)
 
         # -------------------------------------------
         # iterating rows calculation
@@ -719,6 +738,9 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
 
             if new_lineup == last_lineup:
                 lineup_event_dict[row[f"{HorV[0]}_exactevent"]][-1] += 1
+                if row[f"{HorV[0]}_exactevent"] in pos_contrib:
+                    lineup_event_dict["off_poss"][-1] += 1
+
             elif new_lineup != last_lineup and len(new_lineup) == 5:
                 for key in list(lineup_event_dict.keys()):
                     if key == "Lineup":
@@ -952,20 +974,12 @@ async def create_lfinal_df(
             lineup_time_score_df[("lineup", "lineup")] == row["Lineup"]
         ][("total", "seconds")]
         time = seconds.iloc[0]
-        global_off_possession = row[pos_contrib].sum()
-        global_def_possession = row[neg_contrib].sum()
+        global_off_possession = row["off_poss"]
+        global_def_possession = row["def_poss"]
         global_efficiency = cal_eff(global_off_possession, global_def_possession, time)
 
-        try:
-            off_rtg = (100 * points_scored) / (
-                global_off_possession + global_def_possession
-            )
-            def_rtg = (100 * points_conceded) / (
-                global_off_possession + global_def_possession
-            )
-        except ZeroDivisionError:
-            off_rtg = 0
-            def_rtg = 0
+        off_rtg = cal_rtg(points_scored, global_off_possession)
+        def_rtg = cal_rtg(points_conceded, global_def_possession)
 
         net_rtg = off_rtg - def_rtg
         off_rtg = "{:.3f}".format(off_rtg)

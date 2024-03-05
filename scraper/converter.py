@@ -1,5 +1,7 @@
+import asyncio
+import os
+
 from tables_function import *
-import os, asyncio
 
 
 class Converter:
@@ -94,6 +96,7 @@ class Converter:
             files.remove(".DS_Store")
         except:
             pass
+
 
         tasks = []
         for file in files:
