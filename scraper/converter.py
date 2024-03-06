@@ -48,6 +48,7 @@ class Converter:
                 print(filename, "main loop done")
 
             except ValueError:
+                # sometimes player name wasn't nither on starters nor players entered the game but he exits suddenly :|
                 invalids += 1
                 print(filename, "Invalid substitution data!")
                 continue
@@ -100,6 +101,7 @@ class Converter:
 
         tasks = []
         for file in files:
+            # if "Carleton_Canisius_07_30_2023" in file:
             tasks.append(self.data2table(file))
 
         return tasks

@@ -51,6 +51,26 @@ neg_contrib = [
     "Block",
 ]
 
+eff_pos_contrib = [
+    "Assist",
+    "defensive rebound",
+    "made 3-pt. jump shot",
+    "made free throw",
+    "made jump shot",
+    "made layup",
+    "offensive rebound",
+]
+
+eff_neg_contrib = [
+    "Turnover",
+    "Steal",
+    "Block",
+    "missed 3-pt. jump shot",
+    "missed free throw",
+    "missed jump shot",
+    "missed layup",
+]
+
 # for final tables
 final_columns = [
     "Player Name",

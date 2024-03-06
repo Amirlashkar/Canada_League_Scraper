@@ -72,15 +72,33 @@ def list_players(df: pd.DataFrame, quarter_index: int, HorV: str) -> tuple:
 
 def cal_eff(offense: int, defense: int, time: int) -> float:
     """
-    calculates effectiveness based on inputs.
+    calculates efficiency based on inputs.
     offense: number of offensive acts
     defense: number of defensive acts
     time: in-game time for a player that we are calculating his effectiveness
     """
+
     if time != 0:
         eff = ((offense - defense) * 60) / time
     else:
         eff = 0
+
+    return float(eff)
+
+
+def changed_cal_eff(pos_contrib:float, neg_contrib:float, time:float):
+    """
+    calculates efficiency based on inputs.
+    pos_contrib: points scored added to events count which are positive
+    neg_contrib: points conceded added to events count which are negitive
+    time: df containing time for each players or lineups
+    """
+
+    if time != 0:
+        eff = ((pos_contrib - neg_contrib) / time) * 100
+    else:
+        eff = 0
+
     return float(eff)
 
 
@@ -212,8 +230,6 @@ async def create_eff_df(cusMin_df:pd.DataFrame, eff_columns:list, custom_minute:
     for _, row in cusMin_df.iterrows():
         data = {("player", "player"): [row["player", "player", "player"]]}
         for col in eff_columns:
-            ######### offenese and defence calculation should be changed cause we already
-            ######### have that on event_num dataframe
             alter = []
             for event in pos_contrib:
                 alter.append(col + (event,))
@@ -266,12 +282,12 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
         "seconds1": [],
         "pts1": [],
         "ptc1": [],
-        "seconds3": [],
-        "pts3": [],
-        "ptc3": [],
         "seconds2": [],
         "pts2": [],
         "ptc2": [],
+        "seconds3": [],
+        "pts3": [],
+        "ptc3": [],
         "seconds4": [],
         "pts4": [],
         "ptc4": [],
@@ -383,18 +399,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                     seconds = enter_time - datetime.strptime("00:00", "%M:%S")
                     seconds = seconds.total_seconds()
 
-                    pts = (
-                        int(df.iloc[ind - 1]["Score"].split("-")[pts_expression])
-                        - enter_pts
-                    )
-                    ptc = (
-                        int(df.iloc[ind - 1]["Score"].split("-")[ptc_expression])
-                        - enter_ptc
-                    )
-
                     time_dict["seconds"][player_ind] += seconds
-                    time_dict["pts"][player_ind] += pts
-                    time_dict["ptc"][player_ind] += ptc
 
                 # ---------------------
                 # lineup quarter calculations
@@ -416,20 +421,9 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                     seconds = seconds.total_seconds()
                     lineup_time_dict["seconds"][-1] += seconds
                     enter_pts = int(lineup_cached_pts.split("-")[pts_expression])
-                    enter_ptc = int(lineup_cached_pts.split("-")[ptc_expression])
-
-                pts = (
-                    int(df.iloc[ind - 1]["Score"].split("-")[pts_expression])
-                    - enter_pts
-                )
-                ptc = (
-                    int(df.iloc[ind - 1]["Score"].split("-")[ptc_expression])
-                    - enter_ptc
-                )
+                    enter_ptc = int(lineup_cached_ptc.split("-")[ptc_expression])
 
                 lineup_time_dict["seconds"][-1] += seconds
-                lineup_time_dict["pts"][-1] += pts
-                lineup_time_dict["ptc"][-1] += ptc
                 # ---------------------
 
                 quarter_dict["player"] = time_dict["player"]
@@ -478,7 +472,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                 time_dict["points_conceded5min"] = list(np.zeros(len(players_list)))
 
                 lineup_time_dict = {key: [] for key in lineup_time_dict}
-
+            
             in_lineup = starters.copy()
             lineup_time_dict["lineup"].append(sorted(in_lineup.copy()))
             for key in lineup_time_dict:
@@ -488,13 +482,14 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                     else:
                         lineup_time_dict[key].append(0)
 
-            for key in list(lineup_event_dict.keys()):
+            for key in lineup_event_dict:
                 if key == "lineup":
                     lineup_event_dict[key].append(sorted(in_lineup))
                 else:
                     lineup_event_dict[key].append(0)
             continue
         
+
         # counting off possession of opponent team which equals to def posession of selected team
         if row[f"{op_HorV[0]}_player"] not in ("No Player", np.nan, "nan") and row[f"{op_HorV[0]}_exactevent"] not in ("No Event", np.nan, "nan") and not pd.isna(row[f"{op_HorV[0]}_player"]) and not pd.isna(row[f"{op_HorV[0]}_exactevent"]):
             exactevent = row[f"{op_HorV[0]}_exactevent"]
@@ -511,19 +506,17 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                     p_ind = event_num_dict["Player Name"].index(p)
                     event_num_dict["def_poss"][p_ind] += 1
 
-            last_lineup = lineup_event_dict["Lineup"][-1]
-            new_lineup = sorted(in_lineup.copy())
+                last_lineup = lineup_event_dict["Lineup"][-1]
+                new_lineup = sorted(in_lineup.copy())
 
-            if new_lineup == last_lineup:
-                if row[f"{op_HorV[0]}_exactevent"] in pos_contrib:
-                    lineup_event_dict["def_poss"][-1] += 1
+                if new_lineup != last_lineup and len(new_lineup) == 5:
+                    for key in lineup_event_dict:
+                        if key == "Lineup":
+                            lineup_event_dict[key].append(new_lineup)
+                        else:
+                            lineup_event_dict[key].append(0)
 
-            elif new_lineup != last_lineup and len(new_lineup) == 5:
-                for key in list(lineup_event_dict.keys()):
-                    if key == "Lineup":
-                        lineup_event_dict[key].append(new_lineup)
-                    else:
-                        lineup_event_dict[key].append(0)
+                lineup_event_dict["def_poss"][-1] += 1
 
         # -------------------------------------------
         # iterating rows calculation
@@ -538,14 +531,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
             ptscache = time_dict["ptscache"][player_index]
             ptccache = time_dict["ptccache"][player_index]
             if "goes to the bench" in row[f"{HorV[0]}_exactevent"]:
-                # sometimes player name wasn't nither on starters nor players entered the game but he exits suddenly :|
-                # try:
                 in_lineup.remove(row[f"{HorV[0]}_player"])
-                # except:
-                #     print(
-                #         f"{row[f'{HorV[0]}_player']} time analyze has a slight difference from reality due to invalid data !"
-                #     )
-                    # return None
 
                 if cached_time == "not_changed":
                     enter_time = datetime.strptime("10:00", "%M:%S")
@@ -564,12 +550,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                 seconds = enter_time - row["Time"]
                 seconds = seconds.total_seconds()
 
-                pts = int(row["Score"].split("-")[pts_expression]) - enter_pts
-                ptc = int(row["Score"].split("-")[ptc_expression]) - enter_ptc
-
                 time_dict["seconds"][player_index] += seconds
-                time_dict["pts"][player_index] += pts
-                time_dict["ptc"][player_index] += ptc
 
                 ## if player goes to bench in last 5min of quarters 2 an 4
                 ## (considering not to exceed to to much memory and calculate them when needed)
@@ -626,7 +607,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
             last_lineup = lineup_time_dict["lineup"][-1]
             if sorted(in_lineup) != sorted(last_lineup) and len(in_lineup) == 5:
                 cached_time = lineup_time_dict["timecache"][-1]
-                if lineup_time_dict["timecache"][-1] == "not_changed":
+                if cached_time == "not_changed":
                     enter_time = datetime.strptime("10:00", "%M:%S")
                     enter_pts = int(
                         df.iloc[enter_score_index]["Score"].split("-")[pts_expression]
@@ -637,7 +618,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                 else:
                     enter_time = cached_time
                     enter_pts = int(
-                        lineup_time_dict["ptccache"][-1].split("-")[pts_expression]
+                        lineup_time_dict["ptscache"][-1].split("-")[pts_expression]
                     )
                     enter_ptc = int(
                         lineup_time_dict["ptccache"][-1].split("-")[ptc_expression]
@@ -652,17 +633,11 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                 ptc = ptc_curr_score - enter_ptc
 
                 lineup_time_dict["seconds"][-1] += seconds
-                lineup_time_dict["pts"][-1] += pts
-                lineup_time_dict["ptc"][-1] += ptc
 
                 lineup_time_dict["lineup"].append(sorted(in_lineup.copy()))
-                for k in lineup_time_dict:
-                    if k != "lineup":
-                        if "cache" in k:
-                            lineup_time_dict[k].append("not_changed")
-                        else:
-                            lineup_time_dict[k].append(0)
-
+                lineup_time_dict["seconds"].append(0)
+                lineup_time_dict["pts"].append(0)
+                lineup_time_dict["ptc"].append(0)
                 lineup_time_dict["timecache"].append(row["Time"])
                 lineup_time_dict["ptscache"].append(row["Score"])
                 lineup_time_dict["ptccache"].append(row["Score"])
@@ -736,18 +711,53 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
             last_lineup = lineup_event_dict["Lineup"][-1]
             new_lineup = sorted(in_lineup.copy())
 
-            if new_lineup == last_lineup:
-                lineup_event_dict[row[f"{HorV[0]}_exactevent"]][-1] += 1
-                if row[f"{HorV[0]}_exactevent"] in pos_contrib:
-                    lineup_event_dict["off_poss"][-1] += 1
+            if exactevent in pos_contrib:
+                if new_lineup != last_lineup and len(new_lineup) == 5:
+                    for key in lineup_event_dict:
+                        if key == "Lineup":
+                            lineup_event_dict[key].append(new_lineup)
+                        else:
+                            lineup_event_dict[key].append(0)
 
-            elif new_lineup != last_lineup and len(new_lineup) == 5:
-                for key in list(lineup_event_dict.keys()):
-                    if key == "Lineup":
-                        lineup_event_dict[key].append(new_lineup)
-                    else:
-                        lineup_event_dict[key].append(0)
+                lineup_event_dict[exactevent][-1] += 1
+                lineup_event_dict["off_poss"][-1] += 1
             # ---------------------
+            
+        
+        # ---------------------
+        # PtsScored and PtsConceded addition per row if Score column changed somehow
+        if ind not in quarter_indices:
+            pts = int(row["Score"].split("-")[pts_expression])
+            ptc = int(row["Score"].split("-")[ptc_expression])
+
+            try:
+                prepts = int(df.iloc[ind - 1]["Score"].split("-")[pts_expression])
+                preptc = int(df.iloc[ind - 1]["Score"].split("-")[ptc_expression])
+            except:
+                prepts = pts
+                preptc = ptc
+
+            if pts != prepts or ptc != preptc:
+                pts_cnt = pts - prepts
+                ptc_cnt = ptc - preptc
+                for player in in_lineup:
+                    player_ind = time_dict["player"].index(player)
+                    time_dict["pts"][player_ind] += pts_cnt
+                    time_dict["ptc"][player_ind] += ptc_cnt
+
+                last_lineup = lineup_time_dict["lineup"][-1]
+                if sorted(in_lineup) != sorted(last_lineup) and len(in_lineup) == 5:
+                    lineup_time_dict["lineup"].append(sorted(in_lineup.copy()))
+                    lineup_time_dict["seconds"].append(0)
+                    lineup_time_dict["pts"].append(0)
+                    lineup_time_dict["ptc"].append(0)
+                    lineup_time_dict["timecache"].append(row["Time"])
+                    lineup_time_dict["ptscache"].append(row["Score"])
+                    lineup_time_dict["ptccache"].append(row["Score"])
+                
+                lineup_time_dict["pts"][-1] += pts_cnt
+                lineup_time_dict["ptc"][-1] += ptc_cnt
+        # ---------------------
     # ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     time_score_df = pd.DataFrame(quarter_dict)
@@ -869,7 +879,10 @@ async def create_pfinal_df(
         time = seconds.iloc[0]
         global_off_possession = row["off_poss"]
         global_def_possession = row["def_poss"]
-        global_efficiency = cal_eff(global_off_possession, global_def_possession, time)
+        
+        eff_pos_contrib_ = points_scored + row[eff_pos_contrib].sum(axis=0)
+        eff_neg_contrib_ = points_conceded + row[eff_neg_contrib].sum(axis=0)
+        global_efficiency = changed_cal_eff(eff_pos_contrib_, eff_neg_contrib_, time)
 
         if row["Player Name"] in events_df5min["player", "player"].tolist():
             time_row5min = time_score_df5min.loc[
@@ -976,7 +989,10 @@ async def create_lfinal_df(
         time = seconds.iloc[0]
         global_off_possession = row["off_poss"]
         global_def_possession = row["def_poss"]
-        global_efficiency = cal_eff(global_off_possession, global_def_possession, time)
+
+        eff_pos_contrib_ = points_scored + row[eff_pos_contrib].sum(axis=0)
+        eff_neg_contrib_ = points_conceded + row[eff_neg_contrib].sum(axis=0)
+        global_efficiency = changed_cal_eff(eff_pos_contrib_, eff_neg_contrib_, time)
 
         off_rtg = cal_rtg(points_scored, global_off_possession)
         def_rtg = cal_rtg(points_conceded, global_def_possession)
