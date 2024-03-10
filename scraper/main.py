@@ -8,7 +8,6 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 import pandas as pd
 import os
-import yaml
 import time
 from datetime import datetime
 from scraper_functions import *
@@ -17,15 +16,13 @@ driver_options = webdriver.ChromeOptions()
 driver_options.add_argument("--headless")
 driver_options.add_argument("--no-sandbox")  # This make Chromium reachable
 driver_options.add_argument("--disable-dev-shm-usage")  # Overcomes limited resource problems
-driver_options.add_argument('start-maximized') 
+driver_options.add_argument('start-maximized')
 driver_options.add_argument('disable-infobars')
 driver_options.add_argument("--disable-extensions")
 
 season = "2023-24"
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=driver_options)
 driver.get(f"https://universitysport.prestosports.com/sports/mbkb/{season}/schedule")
-
-driver.maximize_window()
 
 # getting elements of last column Box Scores link
 box_scores = driver.find_elements(
@@ -70,12 +67,14 @@ for i, box_score in enumerate(box_scores):
         driver.find_element(
             By.XPATH, f"//a[contains(text(),'{q + 1}') and contains(text(), 'Qtr')]"
         ).click()
+
         wait_till_located(
             driver,
             "XPATH",
             f"//section[contains(@class, 'active')]//h1[contains(text(), 'Period{q + 1}')]",
             1,
         )
+
         teams_dict = {visitor_team: "Visitor", home_team: "Home"}
         for team in teams_dict:
             players_xpath_pattern = f"//section[contains(@class, 'active')]//span[@class='team-name' and contains(text(), \"{team}\")]/../../..//*[self::span or self::a][@class='player-name']"
@@ -92,6 +91,7 @@ for i, box_score in enumerate(box_scores):
     wait_till_located(
         driver, "XPATH", "//span[@class='label' and contains(text(), 'Periods:')]", 1
     )
+
     # getting quarters element
     quarters_element = driver.find_elements(By.XPATH, "//table[@role='presentation']")
     df_list = []
