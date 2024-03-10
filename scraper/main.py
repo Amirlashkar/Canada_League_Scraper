@@ -51,39 +51,10 @@ for i, box_score in enumerate(box_scores):
     time.sleep(1)
     links[i].click()
 
-    # checking if match template has content
-    try:
-        driver.find_element(By.XPATH, "//a[contains(text(), '1st Qtr')]")
-    except NoSuchElementException:
-        driver.back()
+    if not check_content(driver):
         continue
 
-    head_info = driver.find_element(By.XPATH, "//div[@class = 'head']/h1").text.split(
-        "\n"
-    )
-
-    # some matches heading are separated in different ways
-    try:
-        visitor_team = head_info[0].split(" at ")[0]
-        home_team = head_info[0].split(" at ")[1]
-    except IndexError:
-        try:
-            visitor_team = head_info[0].split(" vs. ")[0]
-            home_team = head_info[0].split(" vs. ")[1]
-        except IndexError:
-            visitor_team = head_info[0].split(" vs ")[0]
-            home_team = head_info[0].split(" vs ")[1]
-
-    date_of_match = datetime.strptime(head_info[1], "%B %d, %Y").strftime("%m_%d_%Y")
-    sheet_name = f"{home_team}_{visitor_team}_{date_of_match}.csv"
-
-    # this block ignores matches having overtimes
-    try:
-        driver.find_element(By.XPATH, "//a[contains(@data-view, 'period5')]")
-        driver.back()
-        continue
-    except NoSuchElementException:
-        pass
+    sheet_name, home_team, visitor_team = get_sheet_name(driver)
 
     if os.path.exists(os.path.join(os.getcwd(), "data", sheet_name)):
         driver.back()

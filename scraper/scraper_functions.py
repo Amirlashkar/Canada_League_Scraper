@@ -1,12 +1,68 @@
-from zipfile import ZipFile, ZIP_DEFLATED
-import time
+import time, os
+from datetime import datetime
 import pandas as pd
-import os
+from selenium.webdriver import Chrome
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import (
     NoSuchElementException,
     StaleElementReferenceException,
 )
+
+
+def check_content(driver:Chrome) -> bool:
+    """
+    checking if match template has content or overtime
+    """
+
+    # empty content checking block
+    has_content = False
+    try:
+        driver.find_element(By.XPATH, "//a[contains(text(), '1st Qtr')]")
+        has_content = True
+    except NoSuchElementException:
+        driver.back()
+        
+    # overtime checking block
+    has_overtime = False
+    try:
+        driver.find_element(By.XPATH, "//a[contains(@data-view, 'period5')]")
+        driver.back()
+        has_overtime = True
+    except NoSuchElementException:
+        pass
+
+    if has_content and not has_overtime:
+        return True
+    else:
+        return False
+
+
+def get_sheet_name(driver:Chrome) -> str:
+    """
+    providing final sheet name by template heading and date
+    """
+
+    head_info = driver.find_element(By.XPATH, "//div[@class = 'head']/h1").text.split(
+        "\n"
+    )
+
+    # some matches heading are separated in different ways
+    try:
+        visitor_team = head_info[0].split(" at ")[0]
+        home_team = head_info[0].split(" at ")[1]
+    except IndexError:
+        try:
+            visitor_team = head_info[0].split(" vs. ")[0]
+            home_team = head_info[0].split(" vs. ")[1]
+        except IndexError:
+            visitor_team = head_info[0].split(" vs ")[0]
+            home_team = head_info[0].split(" vs ")[1]
+
+    date_of_match = datetime.strptime(head_info[1], "%B %d, %Y").strftime("%m_%d_%Y")
+    sheet_name = f"{home_team}_{visitor_team}_{date_of_match}.csv"
+
+    return sheet_name, home_team, visitor_team, date_of_match
+
 
 # defining inventory.csv path and creating it if not exists
 inventory_path = os.path.join(os.getcwd(), "data", "inventory.csv")
@@ -57,6 +113,7 @@ def wait_till_located(driver, by: str, target: str, timestep: int):
     target: string of target in that specific 'by' aspect
     timestep: each iteration time will be added to timestep as a delay
     """
+
     # a loop till 'check_exists' function returns True
     while check_exists(driver, by, target) == False:
         print("Loading page...")
