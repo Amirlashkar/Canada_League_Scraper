@@ -127,12 +127,16 @@ def data_showoff(data:np.ndarray) -> list:
     data: sequence of data with or without other types of variables
     than float
     """
+
     _data = []
     for elem in data:
         ls = []
         for e in elem:
             try:
                 e = float(e)
+                if abs(e - int(e)) == 0:
+                    e = int(e)
+
             except:
                 pass
 
