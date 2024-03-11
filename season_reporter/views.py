@@ -12,7 +12,7 @@ def analytics(request):
         return redirect("is_superuser")
 
     render_dict = {}
-    teams = os.listdir(reports_path)
+    teams = sorted(os.listdir(reports_path))
     if ".DS_Store" in teams:
         teams.remove(".DS_Store")
 
@@ -141,7 +141,7 @@ def lineup_eval(request):
     if not request.user.is_superuser:
         return redirect("is_superuser")
 
-    teams = os.listdir(reports_path)
+    teams = sorted(os.listdir(reports_path))
     if ".DS_Store" in teams:
         teams.remove(".DS_Store")
     

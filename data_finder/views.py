@@ -46,8 +46,8 @@ def analytics(request):
     
     render_dict = {}
     # taking uniques of team list to show on dropdowns cause they are repeatitive
-    render_dict["home_teams"] = np.unique(inventory_csv["Home"].to_list())
-    render_dict["visitor_teams"] = np.unique(inventory_csv["Visitor"].to_list())
+    render_dict["home_teams"] = sorted(np.unique(inventory_csv["Home"].to_list()))
+    render_dict["visitor_teams"] = sorted(np.unique(inventory_csv["Visitor"].to_list()))
     # for the matter of user logging
     print(f"USER: {request.user.username}")
     # check if user directory exists ; if not creates it
@@ -256,8 +256,8 @@ def lineup_eval(request):
         return redirect("is_superuser")
 
     render_dict = {}
-    render_dict["home_teams"] = np.unique(inventory_csv["Home"].to_list())
-    render_dict["visitor_teams"] = np.unique(inventory_csv["Visitor"].to_list())
+    render_dict["home_teams"] = sorted(np.unique(inventory_csv["Home"].to_list()))
+    render_dict["visitor_teams"] = sorted(np.unique(inventory_csv["Visitor"].to_list()))
     
     if "find-dates" in request.POST:
 
