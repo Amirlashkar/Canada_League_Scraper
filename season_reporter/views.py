@@ -12,7 +12,7 @@ def analytics(request):
         return redirect("is_superuser")
 
     render_dict = {}
-    teams = os.listdir(reports_path)
+    teams = sorted(os.listdir(reports_path))
     if ".DS_Store" in teams:
         teams.remove(".DS_Store")
 
@@ -37,6 +37,10 @@ def analytics(request):
         except:
             pass
         
+        # sorting players table alphabetically for the first time
+        if PL == "players":
+            table = table.sort_values(by="Player Name", ascending=True)
+
         data = table.to_numpy()
         data = data_showoff(data)
  
@@ -100,12 +104,16 @@ def events(request):
         except:
             pass
 
+        # sorting players table alphabetically for the first time
+        if PL == "players":
+            report = report.sort_values(by="Player Name", ascending=True)
+
         data = report.to_numpy()
         data = data_showoff(data)
 
         request.session["report"] = report.to_dict()
 
-        render_dict["theaders"] = report.columns
+        render_dict["theaders"] = ["#" + col if col not in ("Player Name", "Lineup") else col for col in report.columns]
         render_dict["next_rows"] = data
         render_dict["result"] = True
 
@@ -115,17 +123,17 @@ def events(request):
     elif "sort" in request.POST:
         report = request.session["report"]
         report = pd.DataFrame(report)
-        selected_col = request.POST["sort"]
+        selected_col = request.POST["sort"].replace("#", "")
 
         data = report.sort_values(by=selected_col, ascending=False)
         data = data.to_numpy()
         data = data_showoff(data)
 
-        render_dict["theaders"] = report.columns
+        render_dict["theaders"] = ["#" + col if col not in ("Player Name", "Lineup") else col for col in report.columns]
         render_dict["next_rows"] = data
         render_dict["reset_available"] = True
         render_dict["result"] = True
-        render_dict["selected_col"] = selected_col
+        render_dict["selected_col"] = "#" + selected_col
 
     return render(request, "sr_events.html", render_dict)
 
@@ -133,7 +141,7 @@ def lineup_eval(request):
     if not request.user.is_superuser:
         return redirect("is_superuser")
 
-    teams = os.listdir(reports_path)
+    teams = sorted(os.listdir(reports_path))
     if ".DS_Store" in teams:
         teams.remove(".DS_Store")
     

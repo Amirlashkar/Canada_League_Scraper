@@ -46,8 +46,8 @@ def analytics(request):
     
     render_dict = {}
     # taking uniques of team list to show on dropdowns cause they are repeatitive
-    render_dict["home_teams"] = np.unique(inventory_csv["Home"].to_list())
-    render_dict["visitor_teams"] = np.unique(inventory_csv["Visitor"].to_list())
+    render_dict["home_teams"] = sorted(np.unique(inventory_csv["Home"].to_list()))
+    render_dict["visitor_teams"] = sorted(np.unique(inventory_csv["Visitor"].to_list()))
     # for the matter of user logging
     print(f"USER: {request.user.username}")
     # check if user directory exists ; if not creates it
@@ -102,6 +102,10 @@ def analytics(request):
                 table = table.reindex(columns=lineup_show_table)
 
             # this function iterates over data and tries to summerize floats by two digits after floating-point and save them on new data
+            # sorting players table alphabetically for the first time
+            if PL == "players":
+                table = table.sort_values(by="Player Name", ascending=True)
+
             data = table.to_numpy()
             data = data_showoff(data)
             
@@ -211,12 +215,16 @@ def events(request):
         except:
             pass
 
+        # sorting players table alphabetically for the first time
+        if PL == "players":
+            table = table.sort_values(by="Player Name", ascending=True)
+
         data = table.to_numpy()
         data = data_showoff(data)
 
         request.session["table"] = table.to_dict()
 
-        render_dict["theaders"] = table.columns
+        render_dict["theaders"] = ["#" + col if col not in ("Player Name", "Lineup") else col for col in table.columns]
         render_dict["next_rows"] = data
         render_dict["result"] = True
 
@@ -226,17 +234,17 @@ def events(request):
     elif "sort" in request.POST:
         table = request.session["table"]
         table = pd.DataFrame(table)
-        selected_col = request.POST["sort"]
+        selected_col = request.POST["sort"].replace("#", "")
 
         data = table.sort_values(by=selected_col, ascending=False)
         data = data.to_numpy()
         data = data_showoff(data)
 
-        render_dict["theaders"] = table.columns
+        render_dict["theaders"] = ["#" + col if col not in ("Player Name", "Lineup") else col for col in table.columns]
         render_dict["next_rows"] = data
         render_dict["reset_available"] = True
         render_dict["result"] = True
-        render_dict["selected_col"] = selected_col
+        render_dict["selected_col"] = "#" + selected_col
 
     return render(request, "df_events.html", render_dict)
 
@@ -248,8 +256,8 @@ def lineup_eval(request):
         return redirect("is_superuser")
 
     render_dict = {}
-    render_dict["home_teams"] = np.unique(inventory_csv["Home"].to_list())
-    render_dict["visitor_teams"] = np.unique(inventory_csv["Visitor"].to_list())
+    render_dict["home_teams"] = sorted(np.unique(inventory_csv["Home"].to_list()))
+    render_dict["visitor_teams"] = sorted(np.unique(inventory_csv["Visitor"].to_list()))
     
     if "find-dates" in request.POST:
 
