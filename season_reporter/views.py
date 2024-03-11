@@ -106,7 +106,7 @@ def events(request):
 
         # sorting players table alphabetically for the first time
         if PL == "players":
-            table = table.sort_values(by="Player Name", ascending=True)
+            report = report.sort_values(by="Player Name", ascending=True)
 
         data = report.to_numpy()
         data = data_showoff(data)
