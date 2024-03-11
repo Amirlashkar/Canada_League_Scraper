@@ -37,6 +37,10 @@ def analytics(request):
         except:
             pass
         
+        # sorting players table alphabetically for the first time
+        if PL == "players":
+            table = table.sort_values(by="Player Name", ascending=True)
+
         data = table.to_numpy()
         data = data_showoff(data)
  
@@ -99,6 +103,10 @@ def events(request):
             report = report.drop(columns=report.filter(like="Unnamed").columns)
         except:
             pass
+
+        # sorting players table alphabetically for the first time
+        if PL == "players":
+            table = table.sort_values(by="Player Name", ascending=True)
 
         data = report.to_numpy()
         data = data_showoff(data)

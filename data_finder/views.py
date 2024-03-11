@@ -102,6 +102,10 @@ def analytics(request):
                 table = table.reindex(columns=lineup_show_table)
 
             # this function iterates over data and tries to summerize floats by two digits after floating-point and save them on new data
+            # sorting players table alphabetically for the first time
+            if PL == "players":
+                table = table.sort_values(by="Player Name", ascending=True)
+
             data = table.to_numpy()
             data = data_showoff(data)
             
@@ -210,6 +214,10 @@ def events(request):
             table = table.drop(columns=table.filter(like="Unnamed").columns)
         except:
             pass
+
+        # sorting players table alphabetically for the first time
+        if PL == "players":
+            table = table.sort_values(by="Player Name", ascending=True)
 
         data = table.to_numpy()
         data = data_showoff(data)
