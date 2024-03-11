@@ -95,6 +95,7 @@ final_columns = [
 # ------------------------------
 show_table = [
     "Player Name",
+    "minutes",
     "PtsScored",
     "global efficiency",
     "OffRtg",
@@ -102,18 +103,17 @@ show_table = [
     "NetRtg",
     "quarter2 last 5min efficiency",
     "quarter4 last 5min efficiency",
-    "minutes",
 ]
 
 lineup_show_table = [
     "Lineup",
+    "minutes",
     "PtsScored",
     "PtsConceded",
     "efficiency",
     "OffRtg",
     "DefRtg",
     "NetRtg",
-    "minutes",
 ]
 # ------------------------------
 
