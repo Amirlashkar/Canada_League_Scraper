@@ -33,7 +33,7 @@
       {% if is_superuser == 'True' %}
       {% if not data_finder and not season%}
       <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" name="data_finder">
-        Data Finder
+        Match Finder
       </button>
       <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" name="season">
         Season Reporter
@@ -41,12 +41,12 @@
       {% else %}
       <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" 
         {% if data_finder %}
-        name="df_analytics"
+        name="df_analytics">
+        Match Information
         {% else %}
-        name="sr_analytics"
+        name="sr_analytics">
+        Players Stats
         {% endif %}
-        >
-        Analytics Finder
       </button>
       <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" 
         {% if data_finder %}
