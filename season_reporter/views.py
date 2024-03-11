@@ -113,7 +113,7 @@ def events(request):
 
         request.session["report"] = report.to_dict()
 
-        render_dict["theaders"] = report.columns
+        render_dict["theaders"] = ["#" + col if col not in ("Player Name", "Lineup") else col for col in report.columns]
         render_dict["next_rows"] = data
         render_dict["result"] = True
 
@@ -123,17 +123,17 @@ def events(request):
     elif "sort" in request.POST:
         report = request.session["report"]
         report = pd.DataFrame(report)
-        selected_col = request.POST["sort"]
+        selected_col = request.POST["sort"].replace("#", "")
 
         data = report.sort_values(by=selected_col, ascending=False)
         data = data.to_numpy()
         data = data_showoff(data)
 
-        render_dict["theaders"] = report.columns
+        render_dict["theaders"] = ["#" + col if col not in ("Player Name", "Lineup") else col for col in report.columns]
         render_dict["next_rows"] = data
         render_dict["reset_available"] = True
         render_dict["result"] = True
-        render_dict["selected_col"] = selected_col
+        render_dict["selected_col"] = "#" + selected_col
 
     return render(request, "sr_events.html", render_dict)
 
