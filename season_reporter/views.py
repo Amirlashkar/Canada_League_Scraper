@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
-from scraper.tables_function import data_showoff
+from scraper.tables_function import convert_min, data_showoff
 from scraper.constants import show_table, lineup_show_table
+from copy import copy
 import pandas as pd
 import os
 
@@ -41,12 +42,15 @@ def analytics(request):
         if PL == "players":
             table = table.sort_values(by="Player Name", ascending=True)
 
-        data = table.to_numpy()
+        table = table.rename(columns={"minutes": "time"})
+        data_ = copy(table)
+        data_["time"] = data_.apply(lambda row: convert_min(row["time"]), axis=1)
+        data = data_.to_numpy()
         data = data_showoff(data)
  
         request.session["table"] = table.to_dict()
 
-        render_dict["theaders"] = table.columns
+        render_dict["theaders"] = data_.columns
         render_dict["next_rows"] = data
         render_dict["result"] = True
         render_dict["events"] = True
@@ -61,6 +65,7 @@ def analytics(request):
         selected_col = request.POST["sort"]
 
         data = table.sort_values(by=selected_col, ascending=False)
+        data["time"] = data.apply(lambda row: convert_min(row["time"]), axis=1)
         data = data.to_numpy()
         data = data_showoff(data)
 

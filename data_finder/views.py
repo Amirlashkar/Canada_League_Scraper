@@ -1,7 +1,8 @@
+from copy import copy
 from django.shortcuts import redirect, render
 from django.contrib.auth import logout
 from scraper.scraper_functions import *
-from scraper.tables_function import list_players, data_showoff
+from scraper.tables_function import convert_min, list_players, data_showoff
 from scraper.constants import show_table, lineup_show_table
 import pandas as pd
 import numpy as np
@@ -106,7 +107,10 @@ def analytics(request):
             if PL == "players":
                 table = table.sort_values(by="Player Name", ascending=True)
 
-            data = table.to_numpy()
+            table = table.rename(columns={"minutes": "time"})
+            data_ = copy(table)
+            data_["time"] = data_.apply(lambda row: convert_min(row["time"]), axis=1)
+            data = data_.to_numpy()
             data = data_showoff(data)
             
             # session savings
@@ -116,7 +120,7 @@ def analytics(request):
             # main content
             render_dict["next_rows"] = data
             # table headers
-            render_dict["theaders"] = table.columns
+            render_dict["theaders"] = data_.columns
             # this element controls visualization of some buttons
             render_dict["result"] = True
             
@@ -154,6 +158,7 @@ def analytics(request):
         selected_col = request.POST["sort"]
         
         data = table.sort_values(by=selected_col, ascending=False)
+        data["time"] = data.apply(lambda row: convert_min(row["time"]), axis=1)
         data = data.to_numpy()
         data = data_showoff(data)
 
