@@ -119,6 +119,21 @@ def cal_rtg(points:int, possession:int) -> float:
     return rtg
 
 
+def convert_min(minutes):
+    """
+    Converts float minutes to an string represented like 11Hrs, 11Min, 11s
+
+    minutes: float shape of time in minute
+    """
+
+    hours = int(minutes / 60)
+    mins = int(minutes % 60)
+    seconds = int((minutes - int(minutes)) * 60)
+    show_str = f"{hours}Hrs, {mins}Min, {seconds}s"
+    
+    return show_str
+
+
 def data_showoff(data:np.ndarray) -> list:
     """
     takes a sequence of data and converts its floats in shape of

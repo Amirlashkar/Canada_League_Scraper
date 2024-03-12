@@ -1,9 +1,9 @@
 {% extends './base.html' %}
 {% block title %}
 {% if result %}
-{{home}} V {{visitor}} Analytics
+{{home}} V {{visitor}} Information
 {% else %}
-Analytics Finder
+Match Information
 {% endif %}
 {% endblock %}
 {% block content %}
@@ -17,7 +17,7 @@ Analytics Finder
   <div class="title col-md-6 offset-md-3 row">
     <img class="analyze-icon" src="{% static 'icons/analyze.png' %}" width="32" height="32">
     <h1>
-      Analytics Finder
+      Match Information
     </h1>
   </div>
   <form action="" method="post">

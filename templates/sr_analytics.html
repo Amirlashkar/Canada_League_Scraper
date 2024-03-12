@@ -1,9 +1,9 @@
 {% extends './base.html' %}
 {% block title %}
 {% if result %}
-{{selected_team}} Seasonal Analytics
+{{selected_team}} Players Stats
 {% else %}
-Seasonal Analytics
+Seasonal Players Stats
 {% endif %}
 {% endblock %}
 {% block content %}
@@ -18,7 +18,7 @@ Seasonal Analytics
   <div class="title col-md-6 offset-md-3 row">
     <img class="analyze-icon" src="{% static 'icons/season.png' %}" width="32" height="32">
     <h1>
-      Full Season Report
+      Players Stats
     </h1>
   </div>
   <form action="" method="post">
