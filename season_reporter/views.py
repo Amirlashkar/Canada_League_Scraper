@@ -91,11 +91,10 @@ def events(request):
     render_dict = {}
     
     if "find-events" in request.POST:
-        PL = request.POST["pl"]
         report_path = os.path.join(
             reports_path,
             request.session["team"],
-            f"{PL.upper()[0]}EventsSeasonalReport.csv",
+            "PEventsSeasonalReport.csv",
         )
 
         report = pd.read_csv(report_path)
@@ -110,15 +109,14 @@ def events(request):
             pass
 
         # sorting players table alphabetically for the first time
-        if PL == "players":
-            report = report.sort_values(by="Player Name", ascending=True)
+        report = report.sort_values(by="Player Name", ascending=True)
 
         data = report.to_numpy()
         data = data_showoff(data)
 
         request.session["report"] = report.to_dict()
 
-        render_dict["theaders"] = ["#" + col if col not in ("Player Name", "Lineup") else col for col in report.columns]
+        render_dict["theaders"] = ["#" + col if col != "Player Name" else col for col in report.columns]
         render_dict["next_rows"] = data
         render_dict["result"] = True
 
@@ -134,7 +132,7 @@ def events(request):
         data = data.to_numpy()
         data = data_showoff(data)
 
-        render_dict["theaders"] = ["#" + col if col not in ("Player Name", "Lineup") else col for col in report.columns]
+        render_dict["theaders"] = ["#" + col if col != "Player Name" else col for col in report.columns]
         render_dict["next_rows"] = data
         render_dict["reset_available"] = True
         render_dict["result"] = True
