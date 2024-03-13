@@ -60,6 +60,7 @@ for i, box_score in enumerate(box_scores):
     print(
         f"########################## {visitor_team} at {home_team} ##########################"
     )
+
     # waiting for link to load
     wait_till_located(driver, "XPATH", "//a[contains(text(),'Play by Play')]", 1)
 
