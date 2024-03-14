@@ -19,7 +19,15 @@ class Scraper:
 
         self.main_page = "https://universitysport.prestosports.com/"
         self.box_scores_page = f"sports/mbkb/{self.season}/schedule"
-        self.inv_path = os.path.join(os.getcwd(), "data", "inventory.csv")
+        self.inv_path = os.path.join(os.getcwd(), "data_", "inventory.csv")
+
+        # defining inventory.csv path and creating it if not exists
+        if not os.path.exists(self.inv_path):
+            if not os.path.exists(os.path.dirname(self.inv_path)):
+                os.mkdir(os.path.dirname(self.inv_path))
+
+            df = pd.DataFrame(columns=["Home", "Visitor", "Date"])
+            df.to_csv(self.inv_path)
 
     def main_sheet(self, df_list: list, sheet_name: str) -> None:
         """
@@ -50,7 +58,7 @@ class Scraper:
         df = pd.concat(ls, ignore_index=True)
 
         # make data folder if not exists
-        data_path = os.path.join(os.getcwd(), "data")
+        data_path = os.path.join(os.getcwd(), "data_")
         if not os.path.exists(data_path):
             os.mkdir(data_path)
 
@@ -135,15 +143,15 @@ class Scraper:
 
         # some matches heading are separated in different ways
         try:
-            visitor_team = head_info[0].split(" at ")[0]
-            home_team = head_info[0].split(" at ")[1]
+            visitor_team = head_info[0].split(" at ")[0].strip()
+            home_team = head_info[0].split(" at ")[1].strip()
         except IndexError:
             try:
-                visitor_team = head_info[0].split(" vs. ")[0]
-                home_team = head_info[0].split(" vs. ")[1]
+                visitor_team = head_info[0].split(" vs. ")[0].strip()
+                home_team = head_info[0].split(" vs. ")[1].strip()
             except IndexError:
-                visitor_team = head_info[0].split(" vs ")[0]
-                home_team = head_info[0].split(" vs ")[1]
+                visitor_team = head_info[0].split(" vs ")[0].strip()
+                home_team = head_info[0].split(" vs ")[1].strip()
 
         date_of_match = datetime.strptime(head_info[1], "%B %d, %Y").strftime("%m_%d_%Y")
         sheet_name = f"{home_team}_{visitor_team}_{date_of_match}.csv"
@@ -174,6 +182,7 @@ class Scraper:
         soup = await self.get_soup(session, url_)
 
         teams_dict = {visitor_team: "Visitor", home_team: "Home"}
+        print(teams_dict)
         for team in teams_dict:
             players_xpath_pattern = f"//section[contains(@class, 'active')]//span[@class='team-name' and contains(text(), \"{team}\")]/../../..//*[self::span or self::a][@class='player-name']"
             raw_players = self.find_xpath(soup, players_xpath_pattern)
@@ -225,7 +234,7 @@ class Scraper:
                     "Visitor": [None],
                 }
 
-                if homeORvisitor == "home":
+                if "home" in homeORvisitor:
                     data["Home"] = [team_name]
                     data["H-event"] = [event_detail]
                 else:
