@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from aiohttp import ClientSession
-import asyncio, aiohttp
+import asyncio, os
+from datetime import datetime
 from lxml import etree
 import pandas as pd
 
@@ -18,6 +19,7 @@ class Scraper:
 
         self.main_page = "https://universitysport.prestosports.com/"
         self.box_scores_page = f"sports/mbkb/{self.season}/schedule"
+        self.inv_path = os.path.join(os.getcwd(), "data", "inventory.csv")
 
     def main_sheet(self, df_list: list, sheet_name: str) -> None:
         """
@@ -26,6 +28,7 @@ class Scraper:
         df_list: list of quarters df that are going to stick together
         sheet_name: name of sheet
         """
+
         q = 1
         ls = []
         for i, df in enumerate(df_list):
@@ -61,16 +64,18 @@ class Scraper:
         visitor_team: name of visitor team
         date: date of match between these two teams
         """
+
         data = {
             "Home": [home_team],
             "Visitor": [visitor_team],
             "Date": [date],
         }
-        inventory_df = pd.read_csv(inventory_path)
+
+        inventory_df = pd.read_csv(self.inv_path)
         adding_df = pd.DataFrame(data)
         df = pd.concat([inventory_df, adding_df], ignore_index=True)
         df = df.loc[:, ~df.columns.str.contains("^Unnamed")]
-        df.to_csv(inventory_path)
+        df.to_csv(self.inv_path)
 
     def check_inventory(self, home_team: str, visitor_team: str, date: str) -> bool:
         """
@@ -80,7 +85,7 @@ class Scraper:
         visitor_team: name of visitor team
         date: date of match between these two teams
         """
-        df = pd.read_csv(inventory_path)
+        df = pd.read_csv(self.inv_path)
         # comparison line
         expression = df[
             (df["Home"] == home_team)
@@ -91,7 +96,7 @@ class Scraper:
         # retrun true if there is no such data
         return len(expression) == 0
 
-    def find_xpath(self, soup:BeautifulSoup, xpath:str):
+    def find_xpath(self, soup:BeautifulSoup, xpath:str) -> list:
         tree = etree.fromstring(str(soup), parser=etree.HTMLParser())
         elements = tree.xpath(xpath)
         return elements
@@ -125,8 +130,8 @@ class Scraper:
         """
 
         await asyncio.sleep(0)
-        xpath = "//div[@class = 'head']/h1"
-        head_element = self.find_xpath(soup, xpath)[0].text_content().split("\n")
+        xpath = "//div[@class = 'head']/h1//text()"
+        head_info = self.find_xpath(soup, xpath)
 
         # some matches heading are separated in different ways
         try:
@@ -146,7 +151,6 @@ class Scraper:
         return sheet_name, home_team, visitor_team, date_of_match
 
     async def get_soup(self, session:ClientSession, url:str) -> BeautifulSoup|None:
-        # async with ClientSession() as session:
         async with session.get(url) as response:
             if response.status == 200:
                 try:
@@ -167,13 +171,13 @@ class Scraper:
 
         query = f"?view=period{quarter + 1}"
         url_ = url + query
-        soup = self.get_soup(session, url_)
+        soup = await self.get_soup(session, url_)
 
         teams_dict = {visitor_team: "Visitor", home_team: "Home"}
         for team in teams_dict:
             players_xpath_pattern = f"//section[contains(@class, 'active')]//span[@class='team-name' and contains(text(), \"{team}\")]/../../..//*[self::span or self::a][@class='player-name']"
             raw_players = self.find_xpath(soup, players_xpath_pattern)
-            raw_players = [element.text_content() for element in raw_players]
+            raw_players = [element.text for element in raw_players]
             quarters_player_dict[quarter + 1][teams_dict[team]] = {
                 "starters": raw_players[:5],
                 "reserves": raw_players[5:],
@@ -236,24 +240,26 @@ class Scraper:
         return df_list
 
     async def match_process(self, session:ClientSession, url:str):
-        soup = self.get_soup(session, url)
+        soup = await self.get_soup(session, url)
         tasks = [self.check_content(soup), self.get_sheet_name(soup)]
         is_valid, sheet_tuple = await asyncio.gather(*tasks)
 
         if not is_valid:
             return None
 
-        sheet_name, home_team, visitor_team = sheet_tuple
+        sheet_name, home_team, visitor_team, date_of_match = sheet_tuple
 
         quarters_player_dict = await self.general_listing(session, url, home_team, visitor_team)
         query = "?view=plays"
         rows_url = url + query
-        rows_soup = self.get_soup(session, rows_url)
+        rows_soup = await self.get_soup(session, rows_url)
         df_list = await asyncio.to_thread(self.scrape_rows, rows_soup, quarters_player_dict)
 
         if self.check_inventory(home_team, visitor_team, date_of_match):
             self.main_sheet(df_list, sheet_name)
             self.inventory_sheet(home_team, visitor_team, date_of_match)
+
+        return "DONE"
 
     async def main(self):
         async with ClientSession() as session:
