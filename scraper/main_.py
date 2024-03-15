@@ -8,8 +8,9 @@ import pandas as pd
 
 
 class Scraper:
-    def __init__(self, season:str) -> None:
+    def __init__(self, season:str, files_per_scrape:int) -> None:
         self.season = season
+        self.files_per_scrape = files_per_scrape
 
         self.xpath_dict = {
             "box_scores": "//a[@class='link' and ./span[2][contains(text(), 'Box Score')]]",
@@ -20,7 +21,7 @@ class Scraper:
 
         self.main_page = "https://universitysport.prestosports.com/"
         self.box_scores_page = f"sports/mbkb/{self.season}/schedule"
-        self.inv_path = os.path.join(os.getcwd(), "data_", "inventory.csv")
+        self.inv_path = os.path.join(os.getcwd(), "data", "inventory.csv")
 
         # defining inventory.csv path and creating it if not exists
         if not os.path.exists(self.inv_path):
@@ -59,7 +60,7 @@ class Scraper:
         df = pd.concat(ls, ignore_index=True)
 
         # make data folder if not exists
-        data_path = os.path.join(os.getcwd(), "data_")
+        data_path = os.path.join(os.getcwd(), "data")
         if not os.path.exists(data_path):
             os.mkdir(data_path)
 
@@ -164,6 +165,9 @@ class Scraper:
             return sheet_name, home_team, visitor_team, date_of_match
         
         elif len(head_info) > 2:
+            while " " in head_info:
+                head_info.remove(" ")
+
             head_info = [info.strip() for info in head_info]
             try:
                 head_info.remove("at")
@@ -172,9 +176,6 @@ class Scraper:
                     head_info.remove("vs")
                 except:
                     head_info.remove("vs.")
-
-            while " " in head_info:
-                head_info.remove(" ")
 
             visitor_team = head_info[0]
             home_team = head_info[1]
@@ -347,12 +348,12 @@ class Scraper:
                 tasks.append(task)
             
             errors = []
-            for chunk in self.chunk_tasks(tasks, 30):
+            for chunk in self.chunk_tasks(tasks, self.files_per_scrape):
                 match_contents = await asyncio.gather(*chunk)
                 errors += [content for content in match_contents if "Error" in content]
 
-            print(len(errors))
+            print(f"Number of errors: {len(errors)}")
 
 if __name__ == "__main__":
-    scraper = Scraper("2023-24")
+    scraper = Scraper("2023-24", 30)
     asyncio.run(scraper.main())
