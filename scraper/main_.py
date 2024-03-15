@@ -1,3 +1,4 @@
+from typing import Coroutine, Generator, List, Tuple
 from bs4 import BeautifulSoup
 from aiohttp import ClientSession
 import asyncio, os
@@ -132,7 +133,7 @@ class Scraper:
         else:
             return False
 
-    async def get_sheet_name(self, soup:BeautifulSoup) -> str:
+    async def get_sheet_name(self, soup:BeautifulSoup) -> Tuple[str, str, str, str] | None:
         """
         providing final sheet name by template heading and date
         """
@@ -142,23 +143,51 @@ class Scraper:
         head_info = self.find_xpath(soup, xpath)
 
         # some matches heading are separated in different ways
-        try:
-            visitor_team = head_info[0].split(" at ")[0].strip()
-            home_team = head_info[0].split(" at ")[1].strip()
-        except IndexError:
+        if len(head_info) == 2:
             try:
-                visitor_team = head_info[0].split(" vs. ")[0].strip()
-                home_team = head_info[0].split(" vs. ")[1].strip()
+                visitor_team = head_info[0].split(" at ")[0].strip()
+                home_team = head_info[0].split(" at ")[1].strip()
             except IndexError:
-                visitor_team = head_info[0].split(" vs ")[0].strip()
-                home_team = head_info[0].split(" vs ")[1].strip()
+                try:
+                    try:
+                        visitor_team = head_info[0].split(" vs. ")[0].strip()
+                        home_team = head_info[0].split(" vs. ")[1].strip()
+                    except IndexError:
+                        visitor_team = head_info[0].split(" vs ")[0].strip()
+                        home_team = head_info[0].split(" vs ")[1].strip()
+                except IndexError:
+                    print(head_info)
 
-        date_of_match = datetime.strptime(head_info[1], "%B %d, %Y").strftime("%m_%d_%Y")
-        sheet_name = f"{home_team}_{visitor_team}_{date_of_match}.csv"
+            date_of_match = datetime.strptime(head_info[1], "%B %d, %Y").strftime("%m_%d_%Y")
+            sheet_name = f"{home_team}_{visitor_team}_{date_of_match}.csv"
 
-        return sheet_name, home_team, visitor_team, date_of_match
+            return sheet_name, home_team, visitor_team, date_of_match
+        
+        elif len(head_info) > 2:
+            head_info = [info.strip() for info in head_info]
+            try:
+                head_info.remove("at")
+            except:
+                try:
+                    head_info.remove("vs")
+                except:
+                    head_info.remove("vs.")
 
-    async def get_soup(self, session:ClientSession, url:str) -> BeautifulSoup|None:
+            while " " in head_info:
+                head_info.remove(" ")
+
+            visitor_team = head_info[0]
+            home_team = head_info[1]
+            date_of_match = datetime.strptime(head_info[2], "%B %d, %Y").strftime("%m_%d_%Y")
+
+            sheet_name = f"{home_team}_{visitor_team}_{date_of_match}.csv"
+
+            return sheet_name, home_team, visitor_team, date_of_match
+
+        else:
+            return None
+
+    async def get_soup_(self, session:ClientSession, url:str) -> BeautifulSoup | None:
         async with session.get(url) as response:
             if response.status == 200:
                 try:
@@ -171,6 +200,20 @@ class Scraper:
                 print(f"Error fetching {url}: {response.status}")
                 return None
 
+    async def get_soup(self, session:ClientSession, url:str) -> BeautifulSoup | None:
+        for i in range(3):
+            await asyncio.sleep(2)
+            try:
+                soup = await self.get_soup_(session, url)
+                break
+            except asyncio.exceptions.TimeoutError:
+                print(f"TIMEOUT: {url}")
+
+        if soup:
+            return soup
+        else:
+            return None
+
     async def quarter_listing(self, quarters_player_dict:dict,
                               quarter:int,
                               session:ClientSession,
@@ -182,7 +225,6 @@ class Scraper:
         soup = await self.get_soup(session, url_)
 
         teams_dict = {visitor_team: "Visitor", home_team: "Home"}
-        print(teams_dict)
         for team in teams_dict:
             players_xpath_pattern = f"//section[contains(@class, 'active')]//span[@class='team-name' and contains(text(), \"{team}\")]/../../..//*[self::span or self::a][@class='player-name']"
             raw_players = self.find_xpath(soup, players_xpath_pattern)
@@ -209,7 +251,7 @@ class Scraper:
         for qn, element in enumerate(quarters_element):
             element = etree.tostring(element, encoding='unicode')
             q_soup = BeautifulSoup(element, "html.parser")
-            print(f"\nQUARTER {qn + 1}\n")
+            # print(f"\nQUARTER {qn + 1}\n")
 
             # event row element
             rows = q_soup.find_all(class_="row")
@@ -219,8 +261,16 @@ class Scraper:
 
             for row in rows:
                 event_time = row.find(class_="time").text
-                home_score = row.find(class_="h-score").text
-                visitor_score = row.find(class_="v-score").text
+                try:
+                    home_score = row.find(class_="h-score").text
+                except AttributeError:
+                    home_score = 0
+
+                try:
+                    visitor_score = row.find(class_="v-score").text
+                except AttributeError:
+                    visitor_score = 0
+
                 event_detail = row.find(class_="text").text.strip()
                 team_name = row.find("img").get("alt")
                 homeORvisitor = str(row.find("img").get("class")).split(" ")[1]
@@ -242,7 +292,7 @@ class Scraper:
                     data["V-event"] = [event_detail]
 
                 df = pd.concat([df, pd.DataFrame(data)], ignore_index=True)
-                print(data)
+                # print(data)
 
             df_list.append(df)
 
@@ -253,10 +303,19 @@ class Scraper:
         tasks = [self.check_content(soup), self.get_sheet_name(soup)]
         is_valid, sheet_tuple = await asyncio.gather(*tasks)
 
-        if not is_valid:
-            return None
+        if sheet_tuple != None:
+            sheet_name, home_team, visitor_team, date_of_match = sheet_tuple
+            path = os.path.join(os.getcwd(), "data_", sheet_name)
+            if os.path.exists(path):
+                print(f"{sheet_name} EXISTS")
+                return "Exists"
 
-        sheet_name, home_team, visitor_team, date_of_match = sheet_tuple
+            print(f"{sheet_name} STARTED")
+        else:
+            return "Error"
+
+        if not is_valid:
+            return "Error"
 
         quarters_player_dict = await self.general_listing(session, url, home_team, visitor_team)
         query = "?view=plays"
@@ -268,7 +327,13 @@ class Scraper:
             self.main_sheet(df_list, sheet_name)
             self.inventory_sheet(home_team, visitor_team, date_of_match)
 
-        return "DONE"
+        print(f"{sheet_name} DONE")
+        return f"{sheet_name} DONE"
+    
+    def chunk_tasks(self, tasks:List[Coroutine], chunk_size:int) -> Generator:
+        for i in range(0, len(tasks), chunk_size):
+            chunk = tasks[i:i + chunk_size]
+            yield chunk
 
     async def main(self):
         async with ClientSession() as session:
@@ -280,9 +345,14 @@ class Scraper:
                 url = self.main_page + url.get("href")
                 task = self.match_process(session, url)
                 tasks.append(task)
+            
+            errors = []
+            for chunk in self.chunk_tasks(tasks, 30):
+                match_contents = await asyncio.gather(*chunk)
+                errors += [content for content in match_contents if "Error" in content]
 
-            match_contents = await asyncio.gather(*tasks)
-            print(match_contents)
+            print(len(errors))
 
-scraper = Scraper("2023-24")
-asyncio.run(scraper.main())
+if __name__ == "__main__":
+    scraper = Scraper("2023-24")
+    asyncio.run(scraper.main())
