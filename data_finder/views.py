@@ -196,9 +196,8 @@ def events(request):
         "selected_date": request.session["selected_date"].replace("_", "/"),
         "HV": request.session["HV"],
     }
-    
+
     if "find-events" in request.POST:
-        PL = request.POST["pl"]
         HV = request.session["HV"]
         table_path = os.path.join(
             tables_path,
@@ -206,9 +205,9 @@ def events(request):
             request.session["visitor"],
             request.session["selected_date"],
             HV,
-            f"{PL.upper()[0]}AllEvents.csv"
+            "PAllEvents.csv"
         )
-        
+
         table = pd.read_csv(table_path)
         try:
             table = table.drop(columns=table.filter(like="poss").columns)
@@ -221,15 +220,14 @@ def events(request):
             pass
 
         # sorting players table alphabetically for the first time
-        if PL == "players":
-            table = table.sort_values(by="Player Name", ascending=True)
+        table = table.sort_values(by="Player Name", ascending=True)
 
         data = table.to_numpy()
         data = data_showoff(data)
 
         request.session["table"] = table.to_dict()
 
-        render_dict["theaders"] = ["#" + col if col not in ("Player Name", "Lineup") else col for col in table.columns]
+        render_dict["theaders"] = ["#" + col if col != "Player Name" else col for col in table.columns]
         render_dict["next_rows"] = data
         render_dict["result"] = True
 
@@ -245,7 +243,7 @@ def events(request):
         data = data.to_numpy()
         data = data_showoff(data)
 
-        render_dict["theaders"] = ["#" + col if col not in ("Player Name", "Lineup") else col for col in table.columns]
+        render_dict["theaders"] = ["#" + col if col != "Player Name" else col for col in table.columns]
         render_dict["next_rows"] = data
         render_dict["reset_available"] = True
         render_dict["result"] = True

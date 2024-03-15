@@ -25,41 +25,13 @@ Seasonal Events Finder
   <form action="" method="post">
     {% csrf_token %}
     <div class="col-md-6 offset-md-3 center main-panel">
-      <h4>Choose Lineups or Players</h4>
+      <h4>Find players event table</h4>
       <hr class="line">
       <div class="row bring-center row-margin">
         <div class="col-md-12">
           <p>Team</p>
           <label class="bring-center">
             {{request.session.team}}
-          </label>
-        </div>
-      </div>
-      <div class="row bring-center switch-margin">
-        <p>Choose Table</p>
-      </div>
-      <div class="row bring-center">
-        <div class="col-md-2">
-          <label>Players</label>
-        </div>
-        <svg id="noise-svg">
-          <filter id='noiseFilter'>
-            <feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch' />
-          </filter>
-          <rect id="noise-rect" filter='url(#noiseFilter)' />
-        </svg>
-
-        <input type="hidden" name="pl" id="pl" value="lineups">
-        <div id="dynamic_pl" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
-          <div class="toggle">
-            <div class="detail"></div>
-            <div class="detail"></div>
-            <div class="detail"></div>
-          </div>
-        </div>
-        <div class="col-md-2">
-          <label>
-            Lineups
           </label>
         </div>
       </div>
