@@ -47,7 +47,7 @@ class Scraper:
         q = 1
         ls = []
         for i, df in enumerate(df_list):
-            if type(df) == pd.DataFrame:
+            if isinstance(df, pd.DataFrame):
                 # adding some row for the sake of quarter change mentioning
                 quarter_row = pd.DataFrame(
                     [[f"Quarter {q}" for _ in range(6)]], columns=df.columns
@@ -123,7 +123,6 @@ class Scraper:
 
         tree = etree.fromstring(str(soup), parser=etree.HTMLParser())
         elements = tree.xpath(xpath)
-        print(type(elements[0]))
         return elements
 
     async def check_content(self, soup: Optional[BeautifulSoup]) -> bool:
