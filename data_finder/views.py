@@ -1,7 +1,6 @@
 from copy import copy
 from django.shortcuts import redirect, render
 from django.contrib.auth import logout
-from scraper.scraper_functions import *
 from scraper.tables_function import convert_min, list_players, data_showoff
 from scraper.constants import show_table, lineup_show_table
 import pandas as pd
@@ -16,7 +15,7 @@ inventory_csv = pd.read_csv(inventory_path)
 
 def is_superuser(request):
     # This functions checks if user is admin or not
-    
+
     stuck_keys = "".join(list(request.POST.keys()))
     render_dict = {"is_superuser":str(request.user.is_superuser)}
     if "data_finder" in request.POST:
@@ -30,9 +29,9 @@ def is_superuser(request):
             if "analytics" in k or "lineup_eval" in k:
                 req = k
                 break
-                
+
         return redirect(req)
-    
+
     elif "logout" in request.POST:
         logout(request)
         del render_dict["is_superuser"]
@@ -44,7 +43,7 @@ def analytics(request):
     # the user who is not an admin accessed analitycs url would be redirected to root url
     if not request.user.is_superuser:
         return redirect("is_superuser")
-    
+
     render_dict = {}
     # taking uniques of team list to show on dropdowns cause they are repeatitive
     render_dict["home_teams"] = sorted(np.unique(inventory_csv["Home"].to_list()))
@@ -55,7 +54,7 @@ def analytics(request):
     user_path = os.path.join(os.getcwd(), "users", request.user.username)
     if not os.path.exists(user_path):
         os.makedirs(user_path)
-    
+
     # conditions different buttons clicking
     if "find-dates" in request.POST:
 
@@ -88,7 +87,7 @@ def analytics(request):
         home = request.session["home"]
         visitor = request.session["visitor"]
         date = request.session["selected_date"] = request.POST["date"].replace("/", "_")
-        
+
         # getting selected data
         HV = render_dict["HV"] = request.session["HV"]
         PL = request.POST["pl"]
@@ -156,7 +155,7 @@ def analytics(request):
         table = request.session["table"]
         table = pd.DataFrame(table)
         selected_col = request.POST["sort"]
-        
+
         data = table.sort_values(by=selected_col, ascending=False)
         data["time"] = data.apply(lambda row: convert_min(row["time"]), axis=1)
         data = data.to_numpy()
