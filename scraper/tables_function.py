@@ -129,8 +129,8 @@ def convert_min(minutes):
     hours = int(minutes / 60)
     mins = int(minutes % 60)
     seconds = int((minutes - int(minutes)) * 60)
-    show_str = f"{hours}Hrs, {mins}Min, {seconds}s"
-    
+    show_str = f"{str(hours).zfill(2)}:{str(mins).zfill(2)}:{str(seconds).zfill(2)}"
+
     return show_str
 
 
