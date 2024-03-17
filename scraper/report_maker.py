@@ -1,3 +1,4 @@
+from typing import Any, Dict, Generator, List, Optional, Coroutine
 import pandas as pd
 import os, difflib, ast
 from tables_function import cal_eff, cal_rtg
@@ -6,7 +7,8 @@ import asyncio
 
 class Reporter:
 
-    def __init__(self) -> None:
+    def __init__(self, report_per_iter: int) -> None:
+        self.report_per_iter = report_per_iter
 
         # defining static pathes
         self.tables_path = os.path.join(os.getcwd(), "tables")
@@ -18,7 +20,7 @@ class Reporter:
         if not os.path.exists(self.reports_path):
             os.makedirs(self.reports_path)
 
-    def find_valid_similar(self, playername, players_list):
+    def find_valid_similar(self, playername: str, players_list: List[str]) -> Optional[str]:
         """
         this function compares a playername with whole list of players name and chooses best alternative name
 
@@ -41,13 +43,15 @@ class Reporter:
         else:
             return None
 
-    def mix_similars(self, df:pd.DataFrame, LP:str) -> pd.DataFrame:
+    def mix_similars(self, df: pd.DataFrame, LP: str) -> pd.DataFrame:
         """
         some names are for one person but in different forms on df;
         this function makes them as one.
+
         df: dataframe with alternative names
+        LP: either table is player related or lineup related
         """
-        
+
         if LP == "P":
             players = df["Player Name"].to_list()
         else:
@@ -64,8 +68,8 @@ class Reporter:
                     comparing_ls.remove(playername)
 
                     main_name = self.find_valid_similar(playername, comparing_ls)
-                    
-                    if main_name != None:
+
+                    if main_name:
                         df.loc[ind, "Player Name"] = main_name
 
             else:
@@ -76,7 +80,7 @@ class Reporter:
 
                         main_name = self.find_valid_similar(player, comparing_ls)
 
-                        if main_name != None:
+                        if main_name:
                             list_version = list(df.loc[ind, "Lineup"])
                             list_version[i] = main_name
                             tuple_version = tuple(list_version)
@@ -88,7 +92,7 @@ class Reporter:
 
         return df
 
-    async def measure_report(self, dfs_dict:dict):
+    async def measure_report(self, dfs_dict: Dict[str, List[pd.DataFrame]]) -> List[pd.DataFrame]:
         """
         the function sticks dataframes of a team from all season wide and sums up players statistic together and also adds new columns
         dfs_ls: dictionary of an specific team dataframes from all over season
@@ -114,7 +118,7 @@ class Reporter:
                 summed_df["Eff"] = summed_df.apply(lambda row: cal_eff(row["total off possession"],
                                                                     row["total def possession"],
                                                                     row["minutes"]), axis=1)
-                
+
                 if LP == "P":
                     ptsKey = "realPtsScored"
                 else:
@@ -132,7 +136,7 @@ class Reporter:
 
         return dfs
 
-    async def fill_team_dict(self, home):
+    async def fill_team_dict(self, home: str) -> None:
         await asyncio.sleep(0)
         home_path = os.path.join(self.tables_path, home)
         visitor_teams = os.listdir(home_path)
@@ -195,7 +199,7 @@ class Reporter:
                     self.teams_dict[teamname]["PE"].append(Pevents_table)
                     self.teams_dict[teamname]["LE"].append(Levents_table)
         
-    async def team_report(self, team):
+    async def team_report(self, team: str) -> None:
         await asyncio.sleep(0)
         team_report_path = os.path.join(self.reports_path, team)
         if not os.path.exists(team_report_path):
@@ -229,14 +233,29 @@ class Reporter:
         except ValueError:
             pass
 
-    async def report(self):
+    def chunk_tasks(self, tasks:List[Coroutine], chunk_size:int) -> Generator[List[Coroutine], None, None]:
+        """
+        Chunks list of tasks into multiple lists
+
+        tasks: list of all tasks
+        chunk_size: how many tasks would be in each chunk (this means how many tasks will be done at same time)
+        """
+
+        for i in range(0, len(tasks), chunk_size):
+            chunk = tasks[i:i + chunk_size]
+            yield chunk
+
+    async def main(self) -> None:
+        """
+        Running core
+        """
 
         existing_teams = os.listdir(self.tables_path)
         try:
             existing_teams.remove(".DS_Store")
         except:
             pass
-        
+
         homes_task = []
         for home in existing_teams:
             task = self.fill_team_dict(home)
@@ -248,8 +267,9 @@ class Reporter:
         for team in self.teams_dict:
             task = self.team_report(team)
             teams_task.append(task)
-        
-        await asyncio.gather(*teams_task)
 
-reporter = Reporter()
-asyncio.run(reporter.report())
+        for chunk in self.chunk_tasks(teams_task, self.report_per_iter):
+            await asyncio.gather(*chunk)
+
+reporter = Reporter(30)
+asyncio.run(reporter.main())
