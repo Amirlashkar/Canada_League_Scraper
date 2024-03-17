@@ -1,3 +1,4 @@
+from typing import List, Generator, Coroutine
 import asyncio
 import os
 
@@ -6,17 +7,24 @@ from tables_function import *
 
 class Converter:
 
-    def __init__(self) -> None:
+    def __init__(self, convert_per_iter: int) -> None:
+        self.convert_per_iter = convert_per_iter
         self.data_path = os.path.join(os.getcwd(), "data")
         self.tables_path = os.path.join(os.getcwd(), "tables")
         self.custom_min = 1
 
-    def check_match_dir(self, home: str, visitor: str, date: str, HorV:str):
+    def check_match_dir(self, home: str, visitor: str, date: str, HorV:str) -> None:
         match_dir = os.path.join(self.tables_path, home, visitor, date, HorV)
         if not os.path.exists(match_dir):
             os.makedirs(match_dir)
 
-    async def data2table(self, filename):
+    async def data2table(self, filename: str) -> int:
+        """
+        All tables are created here from every data file
+
+        filename: name of file which we want to extract tables of it
+        """
+
         print("filename started")
         await asyncio.sleep(0)
         invalids = 0
@@ -28,12 +36,11 @@ class Converter:
             visitor = splitted_name[1]
             date = f"{splitted_name[2]}_{splitted_name[3]}_{splitted_name[4]}"
             match_dir = os.path.join(self.tables_path, home, visitor, date, HorV)
-            # HorV = "Home" if home == "Carleton" else "Visitor"
             self.check_match_dir(home, visitor, date, HorV)
 
             raw_df = provide_data(home, visitor, date)
             raw_df = initial_edit(raw_df, HorV)
-            
+
             try:
                 (
                     cusMin_df,
@@ -52,7 +59,7 @@ class Converter:
                 invalids += 1
                 print(filename, "Invalid substitution data!")
                 continue
-            
+
             except IndexError:
                 invalids += 1
                 print(filename, "Empty Dataframe!")
@@ -68,14 +75,14 @@ class Converter:
                 events_df5min,
                 time_score_df5min,
             )
-            
+
             lfinal_task = create_lfinal_df(
                 raw_df, HorV, date, lineup_time_score_df, lineup_event_df
             )
 
             tasks = [eff_task, pfinal_task, lfinal_task]
             eff_df, pfinal_table, lfinal_table = await asyncio.gather(*tasks)
-            
+
             cusMin_df.to_csv(os.path.join(match_dir, "CustomMinuteEvents.csv"))
             events_df.to_csv(os.path.join(match_dir, "PAllEvents.csv"))
             lineup_event_df.to_csv(os.path.join(match_dir, "LAllEvents.csv"))
@@ -90,7 +97,11 @@ class Converter:
         print(filename, "finished")
         return invalids
 
-    def get_tasks(self):
+    def get_tasks(self) -> List[Coroutine[int, None, None]]:
+        """
+        Provides all tasks that is needed to be done inside a list
+        """
+
         files = os.listdir(self.data_path)
         files.remove("inventory.csv")
         try:
@@ -98,19 +109,33 @@ class Converter:
         except:
             pass
 
-
         tasks = []
         for file in files:
-            # if "Carleton_Canisius_07_30_2023" in file:
             tasks.append(self.data2table(file))
 
         return tasks
 
-    async def convert(self):
-        tasks = self.get_tasks()
-        invalids = await asyncio.gather(*tasks)
-        print(sum(list(invalids)))
-        
+    def chunk_tasks(self, tasks:List[Coroutine], chunk_size:int) -> Generator[List[Coroutine], None, None]:
+        """
+        Chunks list of tasks into multiple lists
 
-conv = Converter()
-asyncio.run(conv.convert())
+        tasks: list of all tasks
+        chunk_size: how many tasks would be in each chunk (this means how many tasks will be done at same time)
+        """
+
+        for i in range(0, len(tasks), chunk_size):
+            chunk = tasks[i:i + chunk_size]
+            yield chunk
+
+    async def main(self):
+        """
+        Running core
+        """
+
+        tasks = self.get_tasks()
+        for chunk in self.chunk_tasks(tasks, self.convert_per_iter):
+            invalids = await asyncio.gather(*chunk)
+            print(sum(list(invalids)))
+
+conv = Converter(30)
+asyncio.run(conv.main())
