@@ -51,7 +51,7 @@ def list_players(df: pd.DataFrame, quarter_index: int, HorV: str) -> Tuple[List[
     """
 
     # reading dictionary of players name from string on quarter row
-    p_dict = ast.literal_eval(df.iloc[quarter_index][HorV])
+    p_dict = df.iloc[quarter_index][HorV]
     p_list = p_dict["starters"].copy()
     # adding reserve players to players list and removing 'Team' if on players list
     p_list.extend(p_dict["reserves"])
@@ -975,7 +975,9 @@ async def create_pfinal_df(
 
         new_df = pd.DataFrame(new_row)
         player_final_table = pd.concat(
-            [player_final_table, new_df], ignore_index=True, axis=0
+            [player_final_table,
+            new_df.astype(player_final_table.dtypes)], # astype method is used to ignore concat future warning
+            ignore_index=True, axis=0
         )
 
     player_final_table = player_final_table.reindex(columns=final_columns)

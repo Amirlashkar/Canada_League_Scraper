@@ -39,7 +39,7 @@ class Scraper:
             df = pd.DataFrame(columns=["Home", "Visitor", "Date"])
             df.to_csv(self.inv_path)
 
-    def main_sheet(self, df_list: List[dict | pd.DataFrame]) -> pd.DataFrame:
+    def main_sheet(self, df_list: List[dict | pd.DataFrame]) -> pd.DataFrame | str:
         """
         this function tells scraper how to assign each quarter df into one df and save it on data folder
 
@@ -66,12 +66,10 @@ class Scraper:
                 q += 1
 
         # combining all quarter-row-containing-dfs together
-        df = pd.concat(ls, ignore_index=True)
-
-        # make data folder if not exists
-        data_path = os.path.join(os.getcwd(), "data")
-        if not os.path.exists(data_path):
-            os.mkdir(data_path)
+        try:
+            df = pd.concat(ls, ignore_index=True)
+        except ValueError: # in case ls has no dataframe inside
+            return "Error: Empty dataframe"
 
         # df.to_csv(os.path.join(data_path, sheet_name))
         return df
@@ -377,17 +375,18 @@ class Scraper:
         """
         All tables are created here from every data file
 
-        
+        raw_df: raw scraped dataframe out of play page
+        home_team: name of home team
+        visitor_team: name of visitor team
+        date_of_match: match date
         """
 
         await asyncio.sleep(0)
         schematic_name = f"{home_team}_{visitor_team}_{date_of_match}"
         invalids = 0
         for HorV in ("Home", "Visitor"):
-            print(schematic_name, "--->", HorV)
             match_dir = os.path.join(self.tables_path, home_team, visitor_team, date_of_match, HorV)
             self.check_tables_dir(home_team, visitor_team, date_of_match, HorV)
-
             raw_df = initial_edit(raw_df, HorV)
 
             try:
@@ -401,17 +400,17 @@ class Scraper:
                     time_score_df5min,
                     eff_columns,
                 ) = await asyncio.to_thread(main_loop, raw_df, HorV, self.custom_min)
-                print(schematic_name, "main loop done")
+                print(schematic_name, "--->", HorV, "main loop done")
 
             except ValueError:
                 # sometimes player name wasn't nither on starters nor players entered the game but he exits suddenly :|
                 invalids += 1
-                print(schematic_name, "Invalid substitution data!")
+                print(schematic_name, "--->", HorV, "Invalid substitution data!")
                 continue
 
             except IndexError:
                 invalids += 1
-                print(schematic_name, "Empty Dataframe!")
+                print(schematic_name, "--->", HorV, "Empty Dataframe!")
                 continue
 
             eff_task = create_eff_df(cusMin_df, eff_columns, self.custom_min)
@@ -443,7 +442,6 @@ class Scraper:
             pfinal_table.to_csv(os.path.join(match_dir, "PFinalTable.csv"))
             lfinal_table.to_csv(os.path.join(match_dir, "LFinalTable.csv"))
 
-        print(schematic_name, "tables finished")
         return invalids
 
     async def match_process(self, session:ClientSession, url:str) -> str | int:
@@ -479,6 +477,9 @@ class Scraper:
         df_list = await asyncio.to_thread(self.scrape_rows, rows_soup, players_dict)
 
         df = self.main_sheet(df_list)
+        if isinstance(df, str):
+            return df
+
         invalids = await self.raw2table(df, home_team, visitor_team, date_of_match)
         self.fill_inv(home_team, visitor_team, date_of_match)
         print(f"{sheet_name} DONE")
@@ -507,7 +508,7 @@ class Scraper:
 
             # all tasks list will be built at this loop
             tasks = []
-            for url in urls[:1]:
+            for url in urls[:20]:
                 url = self.main_page + url.get("href")
                 task = self.match_process(session, url)
                 tasks.append(task)
@@ -517,7 +518,7 @@ class Scraper:
             invalids = []
             for chunk in self.chunk_tasks(tasks, self.files_per_scrape):
                 match_contents = await asyncio.gather(*chunk)
-                errors += [content for content in match_contents if "Error" in content]
+                errors += [content for content in match_contents if isinstance(content, str) and "Error" in content]
                 invalids += [content for content in match_contents if isinstance(content, int)]
 
             print(f"Errors on scraper: {len(errors)}\nInvalid data: {sum(invalids)}")
