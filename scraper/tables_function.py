@@ -6,12 +6,8 @@ import numpy as np
 import pandas as pd
 
 pd.set_option("display.max_colwidth", None)
-import ast
-import asyncio
-import difflib
-import os
-import re
-import sys
+import ast, asyncio, difflib, os, re, sys
+from typing import Coroutine, List, Tuple
 from copy import deepcopy
 from datetime import datetime
 
@@ -20,7 +16,7 @@ sys.path.append(addition_path)
 from constants import *
 
 
-def format_names(ls) -> list:
+def format_names(ls: List[str]) -> List[str]:
     """
     gets player names ls and capitalize its names then swap first and lastname
     as needed to be with respect to scraped table.
@@ -45,7 +41,7 @@ def format_names(ls) -> list:
     return formatted_players
 
 
-def list_players(df: pd.DataFrame, quarter_index: int, HorV: str) -> tuple:
+def list_players(df: pd.DataFrame, quarter_index: int, HorV: str) -> Tuple[List[str], List[str]]:
     """
     extract starter lineup from scraped table and implement some functions on it.
 
@@ -53,15 +49,15 @@ def list_players(df: pd.DataFrame, quarter_index: int, HorV: str) -> tuple:
     quarter_index: row index of an specific quarter which we are extracting lineup from it
     HorV: either you are inspecting Home or Visitor team players
     """
-    
+
     # reading dictionary of players name from string on quarter row
-    p_dict = ast.literal_eval(df.iloc[quarter_index][HorV])
+    p_dict = df.iloc[quarter_index][HorV]
     p_list = p_dict["starters"].copy()
     # adding reserve players to players list and removing 'Team' if on players list
     p_list.extend(p_dict["reserves"])
     if "Team" in p_list:
         p_list.remove("Team")
-    
+
     sts = p_dict["starters"].copy()
 
     p_list = format_names(p_list)
@@ -70,7 +66,7 @@ def list_players(df: pd.DataFrame, quarter_index: int, HorV: str) -> tuple:
     return p_list, sts
 
 
-def cal_eff(offense: int, defense: int, time: int) -> float:
+def cal_eff(offense: int, defense: int, time: float) -> float:
     """
     calculates efficiency based on inputs.
     offense: number of offensive acts
@@ -86,7 +82,7 @@ def cal_eff(offense: int, defense: int, time: int) -> float:
     return float(eff)
 
 
-def changed_cal_eff(pos_contrib:float, neg_contrib:float, time:float):
+def changed_cal_eff(pos_contrib: float, neg_contrib: float, time: float) -> float:
     """
     calculates efficiency based on inputs.
     pos_contrib: points scored added to events count which are positive
@@ -102,7 +98,7 @@ def changed_cal_eff(pos_contrib:float, neg_contrib:float, time:float):
     return float(eff)
 
 
-def cal_rtg(points:int, possession:int) -> float:
+def cal_rtg(points: int, possession: int) -> float:
     """
     calculates rating based on inputs.
 
@@ -119,7 +115,7 @@ def cal_rtg(points:int, possession:int) -> float:
     return rtg
 
 
-def convert_min(minutes):
+def convert_min(minutes: float) -> str:
     """
     Converts float minutes to an string represented like 11Hrs, 11Min, 11s
 
@@ -134,7 +130,7 @@ def convert_min(minutes):
     return show_str
 
 
-def data_showoff(data:np.ndarray) -> list:
+def data_showoff(data: np.ndarray) -> List[float | str | int]:
     """
     takes a sequence of data and converts its floats in shape of
     two digits after floating-point.
@@ -161,7 +157,7 @@ def data_showoff(data:np.ndarray) -> list:
                 ls.append(e)
 
         _data.append(ls)
-    
+
     return _data
 
 
@@ -190,10 +186,10 @@ def initial_edit(df: pd.DataFrame, HorV: str) -> pd.DataFrame:
     df: raw table
     HorV: team side
     """
-    
+
     # look up pattern to find player name
-    pattern = "([A-Z]+\W*[A-Z]+,[A-Z]+\W*[A-Z]+)"
-    
+    pattern = r"([A-Z]+\W*[A-Z]+,[A-Z]+\W*[A-Z]+)"
+
     # players list of both sides that is needed in following
     side_plist, _ = list_players(df, 0, HorV)
     op_plist, _ = list_players(df, 0, "Home" if HorV[0] == "V" else "Visitor")
@@ -232,7 +228,7 @@ def initial_edit(df: pd.DataFrame, HorV: str) -> pd.DataFrame:
     return df
 
 
-async def create_eff_df(cusMin_df:pd.DataFrame, eff_columns:list, custom_minute:float=1):
+async def create_eff_df(cusMin_df: pd.DataFrame, eff_columns: List[Tuple], custom_minute: float=1) -> pd.DataFrame:
     """
     creating effectiveness table from event dataframe separated by custom chunks of time ;
 
@@ -240,6 +236,7 @@ async def create_eff_df(cusMin_df:pd.DataFrame, eff_columns:list, custom_minute:
     eff_columns: list of dynamic strings representing effectiveness dataframe columns each as tuple
     custom_minute: size of time chunks
     """
+
     await asyncio.sleep(0)
 
     # creating effectiveness dataframe like a MultiIndex dataframe by usage of eff_columns
@@ -269,7 +266,7 @@ async def create_eff_df(cusMin_df:pd.DataFrame, eff_columns:list, custom_minute:
     return eff_df
 
 
-def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
+def main_loop(df: pd.DataFrame, HorV: str, custom_minute: float=1) -> Tuple:
     """
     This is the main part which creates time and events tables drived from raw table
 
@@ -491,7 +488,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                 time_dict["points_conceded5min"] = list(np.zeros(len(players_list)))
 
                 lineup_time_dict = {key: [] for key in lineup_time_dict}
-            
+
             in_lineup = starters.copy()
             lineup_time_dict["lineup"].append(sorted(in_lineup.copy()))
             for key in lineup_time_dict:
@@ -507,7 +504,6 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute=1) -> tuple:
                 else:
                     lineup_event_dict[key].append(0)
             continue
-        
 
         # counting off possession of opponent team which equals to def posession of selected team
         if row[f"{op_HorV[0]}_player"] not in ("No Player", np.nan, "nan") and row[f"{op_HorV[0]}_exactevent"] not in ("No Event", np.nan, "nan") and not pd.isna(row[f"{op_HorV[0]}_player"]) and not pd.isna(row[f"{op_HorV[0]}_exactevent"]):
@@ -859,6 +855,17 @@ async def create_pfinal_df(
     events_df5min: pd.DataFrame,
     time_score_df5min: pd.DataFrame,
 ) -> pd.DataFrame:
+    """
+    The function creates table of players related statistics
+
+    df: main row-by-row match dataframe
+    HorV: side of playing team in match
+    date: date of the match
+    event_df: players related events table of the match
+    time_score_df: players related dataframe with content of playtimes and scores
+    events_df5min: players related events table of the match in last 5 minutes of each quarter
+    time_score_df5min: players related dataframe with content of playtimes and scores in last 5 minutes of each quarter
+    """
 
     await asyncio.sleep(0)
     globals()["neg_contrib2"] = []
@@ -880,13 +887,13 @@ async def create_pfinal_df(
         for event, score in list(scoring_values.items()):
             showing_pts += float(row[event] * score)
 
-        points_scored = float(
+        points_scored = int(
             time_score_df.loc[time_score_df[("player", "player")] == row["Player Name"]][
                 ("total", "pts")
             ].to_list()[0]
         )
-        
-        points_conceded = float(
+
+        points_conceded = int(
             time_score_df.loc[time_score_df[("player", "player")] == row["Player Name"]][
                 ("total", "ptc")
             ].to_list()[0]
@@ -896,9 +903,9 @@ async def create_pfinal_df(
             time_score_df[("player", "player")] == row["Player Name"]
         ][("total", "seconds")]
         time = seconds.iloc[0]
-        global_off_possession = row["off_poss"]
-        global_def_possession = row["def_poss"]
-        
+        global_off_possession = int(row["off_poss"])
+        global_def_possession = int(row["def_poss"])
+
         eff_pos_contrib_ = points_scored + row[eff_pos_contrib].sum(axis=0)
         eff_neg_contrib_ = points_conceded + row[eff_neg_contrib].sum(axis=0)
         global_efficiency = changed_cal_eff(eff_pos_contrib_, eff_neg_contrib_, time)
@@ -968,7 +975,9 @@ async def create_pfinal_df(
 
         new_df = pd.DataFrame(new_row)
         player_final_table = pd.concat(
-            [player_final_table, new_df], ignore_index=True, axis=0
+            [player_final_table,
+            new_df.astype(player_final_table.dtypes)], # astype method is used to ignore concat future warning
+            ignore_index=True, axis=0
         )
 
     player_final_table = player_final_table.reindex(columns=final_columns)
@@ -983,20 +992,30 @@ async def create_lfinal_df(
     lineup_time_score_df: pd.DataFrame,
     lineup_event_df: pd.DataFrame,
 ) -> pd.DataFrame:
+    """
+    The function creates table of players related statistics
+
+    df: main row-by-row match dataframe
+    HorV: side of playing team in match
+    date: date of the match
+    event_df: lineups related events table of the match
+    time_score_df: lineups related dataframe with content of playtimes and scores
+    """
+
     await asyncio.sleep(0)
     lineup_final_columns = final_columns.copy()
     if "Player Name" in lineup_final_columns:
         lineup_final_columns.remove("Player Name")
 
     lineup_final_columns = ["Lineup"].extend(lineup_final_columns)
-    lineup_final_table = pd.DataFrame(columns=[lineup_final_columns])
+    lineup_final_table = pd.DataFrame(columns=lineup_final_columns)
     for index, row in lineup_event_df.iterrows():
-        points_scored = float(
+        points_scored = int(
             lineup_time_score_df.loc[
                 lineup_time_score_df["lineup", "lineup"] == tuple(row["Lineup"])
             ][("total", "pts")].to_list()[0]
         )
-        points_conceded = float(
+        points_conceded = int(
             lineup_time_score_df.loc[
                 lineup_time_score_df[("lineup", "lineup")] == tuple(row["Lineup"])
             ][("total", "ptc")].to_list()[0]
@@ -1006,8 +1025,8 @@ async def create_lfinal_df(
             lineup_time_score_df[("lineup", "lineup")] == row["Lineup"]
         ][("total", "seconds")]
         time = seconds.iloc[0]
-        global_off_possession = row["off_poss"]
-        global_def_possession = row["def_poss"]
+        global_off_possession = int(row["off_poss"])
+        global_def_possession = int(row["def_poss"])
 
         eff_pos_contrib_ = points_scored + row[eff_pos_contrib].sum(axis=0)
         eff_neg_contrib_ = points_conceded + row[eff_neg_contrib].sum(axis=0)

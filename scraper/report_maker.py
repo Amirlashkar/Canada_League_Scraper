@@ -1,4 +1,4 @@
-from typing import Any, Dict, Generator, List, Optional, Coroutine
+from typing import Dict, Generator, List, Optional, Coroutine
 import pandas as pd
 import os, difflib, ast
 from tables_function import cal_eff, cal_rtg
@@ -6,7 +6,6 @@ import asyncio
 
 
 class Reporter:
-
     def __init__(self, report_per_iter: int) -> None:
         self.report_per_iter = report_per_iter
 
@@ -172,7 +171,7 @@ class Reporter:
                     except FileNotFoundError:
                         print("Table not found!")
                         break
-                    
+
                     # create team key if it doesn't exist on teams_dict
                     if teamname not in self.teams_dict:
                         self.teams_dict[teamname] = {
@@ -181,7 +180,7 @@ class Reporter:
                             "PE":[],
                             "LE":[],
                         }
-                    
+
                     # dropping unneccessary columns
                     try:
                         drops = ["date", "game_type", "home/visitor", 
@@ -198,13 +197,13 @@ class Reporter:
                     self.teams_dict[teamname]["L"].append(lineup_table)
                     self.teams_dict[teamname]["PE"].append(Pevents_table)
                     self.teams_dict[teamname]["LE"].append(Levents_table)
-        
+
     async def team_report(self, team: str) -> None:
         await asyncio.sleep(0)
         team_report_path = os.path.join(self.reports_path, team)
         if not os.path.exists(team_report_path):
             os.makedirs(team_report_path)
-        
+
         print(team, "started")
 
         try:
@@ -252,6 +251,7 @@ class Reporter:
 
         existing_teams = os.listdir(self.tables_path)
         try:
+            existing_teams.remove("inventory.csv")
             existing_teams.remove(".DS_Store")
         except:
             pass
@@ -271,5 +271,6 @@ class Reporter:
         for chunk in self.chunk_tasks(teams_task, self.report_per_iter):
             await asyncio.gather(*chunk)
 
-reporter = Reporter(30)
-asyncio.run(reporter.main())
+if __name__ == "__main__":
+    reporter = Reporter(25)
+    asyncio.run(reporter.main())
