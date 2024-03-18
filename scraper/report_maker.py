@@ -6,7 +6,6 @@ import asyncio
 
 
 class Reporter:
-
     def __init__(self, report_per_iter: int) -> None:
         self.report_per_iter = report_per_iter
 
@@ -172,7 +171,7 @@ class Reporter:
                     except FileNotFoundError:
                         print("Table not found!")
                         break
-                    
+
                     # create team key if it doesn't exist on teams_dict
                     if teamname not in self.teams_dict:
                         self.teams_dict[teamname] = {
@@ -181,7 +180,7 @@ class Reporter:
                             "PE":[],
                             "LE":[],
                         }
-                    
+
                     # dropping unneccessary columns
                     try:
                         drops = ["date", "game_type", "home/visitor", 
@@ -271,5 +270,6 @@ class Reporter:
         for chunk in self.chunk_tasks(teams_task, self.report_per_iter):
             await asyncio.gather(*chunk)
 
-reporter = Reporter(30)
-asyncio.run(reporter.main())
+if __name__ == "__main__":
+    reporter = Reporter(25)
+    asyncio.run(reporter.main())
