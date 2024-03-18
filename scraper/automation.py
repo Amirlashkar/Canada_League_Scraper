@@ -6,6 +6,7 @@ from datetime import datetime
 from lxml import etree
 import pandas as pd
 from tables_function import *
+from report_maker import Reporter
 
 
 class Scraper:
@@ -508,7 +509,7 @@ class Scraper:
 
             # all tasks list will be built at this loop
             tasks = []
-            for url in urls[:20]:
+            for url in urls:
                 url = self.main_page + url.get("href")
                 task = self.match_process(session, url)
                 tasks.append(task)
@@ -524,5 +525,8 @@ class Scraper:
             print(f"Errors on scraper: {len(errors)}\nInvalid data: {sum(invalids)}")
 
 if __name__ == "__main__":
-    scraper = Scraper("2023-24", 30)
+    scraper = Scraper("2023-24", 25)
+    reporter = Reporter(25)
     asyncio.run(scraper.main())
+    print("----------------------------------REPORTING-STARTED----------------------------------")
+    asyncio.run(reporter.main())
