@@ -9,7 +9,7 @@ import os
 
 
 tables_path = os.path.join(os.getcwd(), "tables")
-inventory_path = os.path.join(os.getcwd(), "data", "inventory.csv")
+inventory_path = os.path.join(os.getcwd(), "tables", "inventory.csv")
 inventory_csv = pd.read_csv(inventory_path)
 
 

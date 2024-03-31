@@ -19,7 +19,6 @@
   width: auto;
   overflow-x: auto;
   overflow-y: auto;
-  height: 600px;
   margin-top: 5% !important;
   margin-bottom: 5% !important;
   font-size: 65% !important;
@@ -159,7 +158,6 @@ table {
   position: sticky;
   left: 0;
   white-space: nowrap;
-  padding: 18px;
   border: solid 1px #464646 !important;
 }
 

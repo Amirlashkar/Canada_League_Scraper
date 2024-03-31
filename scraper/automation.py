@@ -1,4 +1,5 @@
 from typing import Coroutine, Dict, Generator, List, Optional, Tuple
+import aiohttp
 from bs4 import BeautifulSoup
 from aiohttp import ClientSession
 import asyncio, os
@@ -261,10 +262,14 @@ class Scraper:
                 break
             except asyncio.exceptions.TimeoutError:
                 print(f"TIMEOUT: {url}")
+            except aiohttp.client_exceptions.ClientConnectorError:
+                print(f"Connection Error: {url}")
+            except aiohttp.client_exceptions.ClientOSError:
+                print(f"Client OS Error: {url}")
 
-        if soup:
+        try:
             return soup
-        else:
+        except:
             return None
 
     async def quarter_listing(self, input_dict: dict,
