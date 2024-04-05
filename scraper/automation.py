@@ -30,6 +30,7 @@ class Scraper:
 
         self.main_page = "https://universitysport.prestosports.com/"
         self.box_scores_page = f"sports/mbkb/{self.season}/schedule"
+        self.data_path = os.path.join(os.getcwd(), "data")
         self.tables_path = os.path.join(os.getcwd(), "tables")
         self.inv_path = os.path.join(self.tables_path, "inventory.csv")
 
@@ -41,7 +42,10 @@ class Scraper:
             df = pd.DataFrame(columns=["Home", "Visitor", "Date"])
             df.to_csv(self.inv_path)
 
-    def main_sheet(self, df_list: List[dict | pd.DataFrame]) -> pd.DataFrame | str:
+        if not os.path.exists(self.data_path):
+            os.mkdir(self.data_path)
+
+    def main_sheet(self, df_list: List[dict | pd.DataFrame], sheet_name: str) -> pd.DataFrame | str:
         """
         this function tells scraper how to assign each quarter df into one df and save it on data folder
 
@@ -73,7 +77,7 @@ class Scraper:
         except ValueError: # in case ls has no dataframe inside
             return "Error: Empty dataframe"
 
-        # df.to_csv(os.path.join(data_path, sheet_name))
+        df.to_csv(os.path.join(self.data_path, sheet_name))
         return df
 
     def fill_inv(self, home_team: str, visitor_team: str, date: str):
@@ -450,7 +454,7 @@ class Scraper:
 
         return invalids
 
-    async def match_process(self, session:ClientSession, url:str) -> str | int:
+    async def match_process(self, session:ClientSession, url:str) -> Tuple[str, int] | str:
         """
         All processes of one match
 
@@ -482,14 +486,14 @@ class Scraper:
         rows_soup = await self.get_soup(session, rows_url)
         df_list = await asyncio.to_thread(self.scrape_rows, rows_soup, players_dict)
 
-        df = self.main_sheet(df_list)
+        df = self.main_sheet(df_list, sheet_name)
         if isinstance(df, str):
             return df
 
         invalids = await self.raw2table(df, home_team, visitor_team, date_of_match)
         self.fill_inv(home_team, visitor_team, date_of_match)
         print(f"{sheet_name} DONE")
-        return invalids
+        return sheet_name, invalids
 
     def chunk_tasks(self, tasks:List[Coroutine], chunk_size:int) -> Generator[List[Coroutine], None, None]:
         """
@@ -503,9 +507,10 @@ class Scraper:
             chunk = tasks[i:i + chunk_size]
             yield chunk
 
-    async def main(self) -> None:
+    async def main(self) -> List[str]:
         """
         Running core
+        Returns list of added sheets for reporter to update just their reports
         """
 
         async with ClientSession() as session:
@@ -521,17 +526,26 @@ class Scraper:
 
             # running tasks inside each chunk
             errors = []
-            invalids = []
+            invalids = 0
+            added_sheets = []
             for chunk in self.chunk_tasks(tasks, self.files_per_scrape):
                 match_contents = await asyncio.gather(*chunk)
-                errors += [content for content in match_contents if isinstance(content, str) and "Error" in content]
-                invalids += [content for content in match_contents if isinstance(content, int)]
+                for content in match_contents:
+                    if isinstance(content, str) and "Error" in content:
+                        errors.append(content)
+                    elif isinstance(content, tuple):
+                        inval = content[1]
+                        invalids += inval
 
-            print(f"Errors on scraper: {len(errors)}\nInvalid data: {sum(invalids)}")
+                        if inval != 2:
+                            added_sheets.append(content[0])
+
+            print(f"Errors on scraper: {len(errors)}\nInvalid data: {invalids}")
+            return added_sheets
 
 if __name__ == "__main__":
     scraper = Scraper("2023-24", 25)
     reporter = Reporter(25)
-    asyncio.run(scraper.main())
+    added_sheets = asyncio.run(scraper.main())
     print("----------------------------------REPORTING-STARTED----------------------------------")
-    asyncio.run(reporter.main())
+    asyncio.run(reporter.main(added_sheets))
