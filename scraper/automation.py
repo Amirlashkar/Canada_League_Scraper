@@ -30,6 +30,7 @@ class Scraper:
 
         self.main_page = "https://universitysport.prestosports.com/"
         self.box_scores_page = f"sports/mbkb/{self.season}/schedule"
+        self.data_path = os.path.join(os.getcwd(), "data")
         self.tables_path = os.path.join(os.getcwd(), "tables")
         self.inv_path = os.path.join(self.tables_path, "inventory.csv")
 
@@ -41,7 +42,10 @@ class Scraper:
             df = pd.DataFrame(columns=["Home", "Visitor", "Date"])
             df.to_csv(self.inv_path)
 
-    def main_sheet(self, df_list: List[dict | pd.DataFrame]) -> pd.DataFrame | str:
+        if not os.path.exists(self.data_path):
+            os.mkdir(self.data_path)
+
+    def main_sheet(self, df_list: List[dict | pd.DataFrame], sheet_name: str) -> pd.DataFrame | str:
         """
         this function tells scraper how to assign each quarter df into one df and save it on data folder
 
@@ -73,7 +77,7 @@ class Scraper:
         except ValueError: # in case ls has no dataframe inside
             return "Error: Empty dataframe"
 
-        # df.to_csv(os.path.join(data_path, sheet_name))
+        df.to_csv(os.path.join(self.data_path, sheet_name))
         return df
 
     def fill_inv(self, home_team: str, visitor_team: str, date: str):
@@ -482,7 +486,7 @@ class Scraper:
         rows_soup = await self.get_soup(session, rows_url)
         df_list = await asyncio.to_thread(self.scrape_rows, rows_soup, players_dict)
 
-        df = self.main_sheet(df_list)
+        df = self.main_sheet(df_list, sheet_name)
         if isinstance(df, str):
             return df
 
