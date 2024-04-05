@@ -454,7 +454,7 @@ class Scraper:
 
         return invalids
 
-    async def match_process(self, session:ClientSession, url:str) -> str | int:
+    async def match_process(self, session:ClientSession, url:str) -> Tuple[str, int] | str:
         """
         All processes of one match
 
@@ -493,7 +493,7 @@ class Scraper:
         invalids = await self.raw2table(df, home_team, visitor_team, date_of_match)
         self.fill_inv(home_team, visitor_team, date_of_match)
         print(f"{sheet_name} DONE")
-        return invalids
+        return sheet_name, invalids
 
     def chunk_tasks(self, tasks:List[Coroutine], chunk_size:int) -> Generator[List[Coroutine], None, None]:
         """
@@ -507,9 +507,10 @@ class Scraper:
             chunk = tasks[i:i + chunk_size]
             yield chunk
 
-    async def main(self) -> None:
+    async def main(self) -> List[str]:
         """
         Running core
+        Returns list of added sheets for reporter to update just their reports
         """
 
         async with ClientSession() as session:
@@ -525,17 +526,26 @@ class Scraper:
 
             # running tasks inside each chunk
             errors = []
-            invalids = []
+            invalids = 0
+            added_sheets = []
             for chunk in self.chunk_tasks(tasks, self.files_per_scrape):
                 match_contents = await asyncio.gather(*chunk)
-                errors += [content for content in match_contents if isinstance(content, str) and "Error" in content]
-                invalids += [content for content in match_contents if isinstance(content, int)]
+                for content in match_contents:
+                    if isinstance(content, str) and "Error" in content:
+                        errors.append(content)
+                    elif isinstance(content, tuple):
+                        inval = content[1]
+                        invalids += inval
 
-            print(f"Errors on scraper: {len(errors)}\nInvalid data: {sum(invalids)}")
+                        if inval != 2:
+                            added_sheets.append(content[0])
+
+            print(f"Errors on scraper: {len(errors)}\nInvalid data: {invalids}")
+            return added_sheets
 
 if __name__ == "__main__":
     scraper = Scraper("2023-24", 25)
     reporter = Reporter(25)
-    asyncio.run(scraper.main())
+    added_sheets = asyncio.run(scraper.main())
     print("----------------------------------REPORTING-STARTED----------------------------------")
-    asyncio.run(reporter.main())
+    asyncio.run(reporter.main(added_sheets))

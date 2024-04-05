@@ -1,5 +1,6 @@
 from typing import Dict, Generator, List, Optional, Coroutine
 import pandas as pd
+import numpy as np
 import os, difflib, ast
 from tables_function import cal_eff, cal_rtg
 import asyncio
@@ -135,7 +136,10 @@ class Reporter:
 
         return dfs
 
-    async def fill_team_dict(self, home: str) -> None:
+    async def fill_team_dict(self, home: str, updating_teams: List[str]) -> None:
+        if home not in updating_teams:
+            return None
+
         await asyncio.sleep(0)
         home_path = os.path.join(self.tables_path, home)
         visitor_teams = os.listdir(home_path)
@@ -144,6 +148,9 @@ class Reporter:
         except:
             pass
         for visitor in visitor_teams:
+            if visitor not in updating_teams:
+                return None
+
             visitor_path = os.path.join(home_path, visitor)
             dates = os.listdir(visitor_path)
             try:
@@ -232,6 +239,16 @@ class Reporter:
         except ValueError:
             pass
 
+    def updating_teams_(self, added_sheets: List[str]) -> List[str]:
+        teams = []
+        for sheet in added_sheets:
+            splited = sheet.split("_")
+            teams.append(splited[0])
+            teams.append(splited[1])
+
+        updating_teams = list(np.unique(teams))
+        return updating_teams
+
     def chunk_tasks(self, tasks:List[Coroutine], chunk_size:int) -> Generator[List[Coroutine], None, None]:
         """
         Chunks list of tasks into multiple lists
@@ -244,9 +261,11 @@ class Reporter:
             chunk = tasks[i:i + chunk_size]
             yield chunk
 
-    async def main(self) -> None:
+    async def main(self, added_sheets: List[str]) -> None:
         """
         Running core
+
+        added_sheets: list of sheets that reporter should update
         """
 
         existing_teams = os.listdir(self.tables_path)
@@ -256,9 +275,11 @@ class Reporter:
         except:
             pass
 
+        updating_teams = self.updating_teams_(added_sheets)
+
         homes_task = []
         for home in existing_teams:
-            task = self.fill_team_dict(home)
+            task = self.fill_team_dict(home, updating_teams)
             homes_task.append(task)
 
         await asyncio.gather(*homes_task)
