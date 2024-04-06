@@ -698,7 +698,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute: float=1) -> Tuple:
 
             # each custom minutes
             minute_integer = row["Time"].minute + row["Time"].second / 60
-            if minute_integer == 10:
+            if minute_integer >= 10:
                 which_minute = 1
             else:
                 for minute_index, minute in enumerate(minutes_ls):

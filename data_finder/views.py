@@ -8,9 +8,9 @@ import numpy as np
 import os
 
 
-tables_path = os.path.join(os.getcwd(), "tables")
-inventory_path = os.path.join(os.getcwd(), "tables", "inventory.csv")
-inventory_csv = pd.read_csv(inventory_path)
+# tables_path = os.path.join(os.getcwd(), "tables")
+# inventory_path = os.path.join(os.getcwd(), "tables", "inventory.csv")
+# inventory_csv = pd.read_csv(inventory_path)
 
 
 def is_superuser(request):
@@ -18,11 +18,19 @@ def is_superuser(request):
 
     stuck_keys = "".join(list(request.POST.keys()))
     render_dict = {"is_superuser":str(request.user.is_superuser)}
-    if "data_finder" in request.POST:
-        render_dict["data_finder"] = True
+    if "data_finder" in request.POST or "season" in request.POST:
+        menORwomen = request.session["menORwomen"] = request.POST["mw"]
+        data_path = os.path.join(os.getcwd(), "data", menORwomen)
+        tables_path = request.session["tables_path"] = os.path.join(data_path, "tables")
+        inv_path = request.session["inv_path"] = os.path.join(tables_path, "inventory.csv")
+        request.session["reports_path"] = os.path.join(data_path, "reports")
+        request.session["inv_csv"] = pd.read_csv(inv_path).to_json()
 
-    elif "season" in request.POST:
-        render_dict["season"] = True
+        if "data_finder" in request.POST:
+            render_dict["data_finder"] = True
+
+        elif "season" in request.POST:
+            render_dict["season"] = True
 
     elif "analytics" in stuck_keys or "lineup_eval" in stuck_keys:
         for k in request.POST:
@@ -41,11 +49,12 @@ def is_superuser(request):
 
 def analytics(request):
     # the user who is not an admin accessed analitycs url would be redirected to root url
-    if not request.user.is_superuser:
+    if not request.user.is_superuser or "menORwomen" not in request.session:
         return redirect("is_superuser")
 
     render_dict = {}
     # taking uniques of team list to show on dropdowns cause they are repeatitive
+    inventory_csv = pd.DataFrame(eval(request.session["inv_csv"]))
     render_dict["home_teams"] = sorted(np.unique(inventory_csv["Home"].to_list()))
     render_dict["visitor_teams"] = sorted(np.unique(inventory_csv["Visitor"].to_list()))
     # for the matter of user logging
@@ -70,7 +79,7 @@ def analytics(request):
         render_dict["reset_available"] = True
 
         # checking if selected match with specific home, visitor and date exists or not
-        match_tables_path = os.path.join(tables_path, home_team, visitor_team)
+        match_tables_path = os.path.join(request.session["tables_path"], home_team, visitor_team)
         if os.path.exists(match_tables_path):
             matches_date = [
                 # making date better-looking
@@ -91,7 +100,7 @@ def analytics(request):
         # getting selected data
         HV = render_dict["HV"] = request.session["HV"]
         PL = request.POST["pl"]
-        table_path = os.path.join(tables_path, home, visitor, date, HV, f"{PL.upper()[0]}FinalTable.csv")
+        table_path = os.path.join(request.session["tables_path"], home, visitor, date, HV, f"{PL.upper()[0]}FinalTable.csv")
         if os.path.exists(table_path):
             table = pd.read_csv(table_path)
 
@@ -189,6 +198,11 @@ def analytics(request):
 
 
 def events(request):
+    if not request.user.is_superuser or "menORwomen" not in request.session:
+        return redirect("is_superuser")
+    elif "home" not in request.session:
+        return redirect("df_analytics")
+
     render_dict = {
         "home": request.session["home"],
         "visitor": request.session["visitor"],
@@ -199,7 +213,7 @@ def events(request):
     if "find-events" in request.POST:
         HV = request.session["HV"]
         table_path = os.path.join(
-            tables_path,
+            request.session["tables_path"],
             request.session["home"],
             request.session["visitor"],
             request.session["selected_date"],
@@ -254,10 +268,11 @@ def events(request):
 def lineup_eval(request):
     # some lines are repeatitive so i won't write comments on them
 
-    if not request.user.is_superuser:
+    if not request.user.is_superuser or "menORwomen" not in request.session:
         return redirect("is_superuser")
 
     render_dict = {}
+    inventory_csv = pd.DataFrame(request.session["inv_csv"])
     render_dict["home_teams"] = sorted(np.unique(inventory_csv["Home"].to_list()))
     render_dict["visitor_teams"] = sorted(np.unique(inventory_csv["Visitor"].to_list()))
     
@@ -270,7 +285,7 @@ def lineup_eval(request):
         render_dict["visitor"] = visitor_team
         HV = render_dict["HV"] = request.session["HV"] = request.POST["hv"]
 
-        match_tables_path = os.path.join(tables_path, home_team, visitor_team)
+        match_tables_path = os.path.join(request.session["tables_path"], home_team, visitor_team)
         try:
             matches_date = os.listdir(match_tables_path)
             if ".DS_Store" in matches_date:
@@ -299,7 +314,7 @@ def lineup_eval(request):
         date = request.session["date"] = request.POST["date"].replace("/", "_")
 
         filename = home + "_" + visitor + "_" + date + ".csv"
-        file_path = os.path.join(os.path.dirname(inventory_path), filename)
+        file_path = os.path.join(os.path.dirname(request.session["inv_path"]), filename)
         raw_data = pd.read_csv(file_path)
         
         # declaring HV variable to get right list of player for Carleton ;
@@ -321,7 +336,7 @@ def lineup_eval(request):
         date = request.session["date"]
 
         HV = render_dict["HV"] = request.session["HV"]
-        lineup_table_path = os.path.join(tables_path, home, visitor, date, HV, "LFinalTable.csv")
+        lineup_table_path = os.path.join(request.session["tables_path"], home, visitor, date, HV, "LFinalTable.csv")
         lineup_table = pd.read_csv(lineup_table_path)
         
         # taking chosen players on template into a list

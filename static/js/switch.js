@@ -53,3 +53,31 @@ document.addEventListener('DOMContentLoaded', function() {
         attributes: true //configure it to listen to attribute changes
     });
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    var statusElement = document.getElementById('dynamic_mw');
+    var inputElement = document.getElementById('mw');
+
+    // Function to update the input value
+    function updateInputValue() {
+        if (statusElement.classList.contains('on')) {
+            inputElement.value = 'women';
+        } else if (statusElement.classList.contains('off')) {
+            inputElement.value = 'men';
+        }
+    }
+
+    // Create a MutationObserver to watch for changes
+    var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === 'class') {
+                updateInputValue();
+            }
+        });
+    });
+
+    // Start observing
+    observer.observe(statusElement, {
+        attributes: true //configure it to listen to attribute changes
+    });
+});

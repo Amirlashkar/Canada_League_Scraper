@@ -14,7 +14,7 @@
   transition: var(--tr);
 }
 
-.toggle {
+.bn_toggle {
   position: relative;
   width: calc(var(--sz) * 4);
   height: calc(var(--sz) * 2);

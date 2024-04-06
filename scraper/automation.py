@@ -11,7 +11,7 @@ from report_maker import Reporter
 
 
 class Scraper:
-    def __init__(self, season: str, files_per_scrape: int) -> None:
+    def __init__(self, menORwomen: str, season: str, files_per_scrape: int) -> None:
         self.season = season
         self.files_per_scrape = files_per_scrape
         self.custom_min = 1
@@ -29,21 +29,22 @@ class Scraper:
         self.data_cols = ["Time", "Home", "H-event", "Score", "V-event", "Visitor"]
 
         self.main_page = "https://universitysport.prestosports.com/"
-        self.box_scores_page = f"sports/mbkb/{self.season}/schedule"
-        self.data_path = os.path.join(os.getcwd(), "data")
-        self.tables_path = os.path.join(os.getcwd(), "tables")
+        self.box_scores_page = f"sports/{menORwomen[0]}bkb/{self.season}/schedule"
+        self.data_path = os.path.join(os.getcwd(), "data", menORwomen)
+        self.rows_path = os.path.join(self.data_path, "rows")
+        self.tables_path = os.path.join(self.data_path, "tables")
         self.inv_path = os.path.join(self.tables_path, "inventory.csv")
 
         # defining inventory.csv path and creating it if not exists
         if not os.path.exists(self.inv_path):
             if not os.path.exists(os.path.dirname(self.inv_path)):
-                os.mkdir(os.path.dirname(self.inv_path))
+                os.makedirs(os.path.dirname(self.inv_path))
 
             df = pd.DataFrame(columns=["Home", "Visitor", "Date"])
             df.to_csv(self.inv_path)
 
-        if not os.path.exists(self.data_path):
-            os.mkdir(self.data_path)
+        if not os.path.exists(self.rows_path):
+            os.makedirs(self.rows_path)
 
     def main_sheet(self, df_list: List[dict | pd.DataFrame], sheet_name: str) -> pd.DataFrame | str:
         """
@@ -77,7 +78,7 @@ class Scraper:
         except ValueError: # in case ls has no dataframe inside
             return "Error: Empty dataframe"
 
-        df.to_csv(os.path.join(self.data_path, sheet_name))
+        df.to_csv(os.path.join(self.rows_path, sheet_name))
         return df
 
     def fill_inv(self, home_team: str, visitor_team: str, date: str):
@@ -544,8 +545,9 @@ class Scraper:
             return added_sheets
 
 if __name__ == "__main__":
-    scraper = Scraper("2023-24", 25)
-    reporter = Reporter(25)
-    added_sheets = asyncio.run(scraper.main())
-    print("----------------------------------REPORTING-STARTED----------------------------------")
-    asyncio.run(reporter.main(added_sheets))
+    for gender in ["women", "men"]:
+        scraper = Scraper(gender, "2023-24", 25)
+        reporter = Reporter(gender, 25)
+        added_sheets = asyncio.run(scraper.main())
+        print("----------------------------------REPORTING-STARTED----------------------------------")
+        asyncio.run(reporter.main(added_sheets))
