@@ -7,12 +7,13 @@ import asyncio
 
 
 class Reporter:
-    def __init__(self, report_per_iter: int) -> None:
+    def __init__(self, menORwomen: str, report_per_iter: int) -> None:
         self.report_per_iter = report_per_iter
 
         # defining static pathes
-        self.tables_path = os.path.join(os.getcwd(), "tables")
-        self.reports_path = os.path.join(os.getcwd(), "reports")
+        self.data_path = os.path.join(os.getcwd(), "data", menORwomen)
+        self.tables_path = os.path.join(self.data_path, "tables")
+        self.reports_path = os.path.join(self.data_path, "reports")
 
         self.teams_dict = {}
 

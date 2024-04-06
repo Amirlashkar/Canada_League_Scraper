@@ -6,6 +6,7 @@
   <link type="text/css" rel="stylesheet" href="{% static 'css/analytics.css' %}"/>
   <link type="text/css" rel="stylesheet" href="{% static 'css/is_superuser.css' %}"/>
   <link type="text/css" rel="stylesheet" href="{% static 'css/binary_switch.css' %}"/>
+  <link type="text/css" rel="stylesheet" href="{% static 'css/switch.css' %}"/>
 </head>
 <body>
   <form action="" method="post">
@@ -18,7 +19,7 @@
         <a href="admin" id="admin_link" hidden></a>
         {% endif %}
         <p class="caution-p">Are You Superuser?</p>
-        <div class="toggle">
+        <div class="bn_toggle">
           <input type="checkbox" id="btn"
           {% if is_superuser == 'True' %}
           checked
@@ -32,6 +33,31 @@
       </div>
       {% if is_superuser == 'True' %}
       {% if not data_finder and not season%}
+      <div class="row col-md-6 offset-md-3 bring-center caution">
+        <div class="col-md-2">
+          <label>Men</label>
+        </div>
+        <svg id="noise-svg">
+          <filter id='noiseFilter'>
+            <feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch' />
+          </filter>
+          <rect id="noise-rect" filter='url(#noiseFilter)' />
+        </svg>
+        
+        <input type="hidden" name="mw" id="mw" value="women">
+        <div id="dynamic_mw" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
+          <div class="toggle">
+            <div class="detail"></div>
+            <div class="detail"></div>
+            <div class="detail"></div>
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label>
+            Women
+          </label>
+        </div>
+      </div>
       <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" name="data_finder">
         Match Finder
       </button>
@@ -62,5 +88,6 @@
     </div>
   </form>
   <script type="text/javascript" src="{% static 'js/binary_switch.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/switch.js' %}"></script>
 </body>
 {% endblock %}
