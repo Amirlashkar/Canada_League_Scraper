@@ -8,6 +8,7 @@ from lxml import etree
 import pandas as pd
 from tables_function import *
 from report_maker import Reporter
+from argparse import ArgumentParser
 
 
 class Scraper:
@@ -502,8 +503,12 @@ class Scraper:
             return added_sheets
 
 if __name__ == "__main__":
+    parser = ArgumentParser(description="Taking scraping season")
+    parser.add_argument("-s", "--season", type=str, help="Chosen season to scrape; format: YYYY-YY")
+    args = parser.parse_args()
+
     for gender in ["women", "men"]:
-        scraper = Scraper(gender, "2023-24", 25)
+        scraper = Scraper(gender, args.season, 25)
         reporter = Reporter(gender, 25)
         added_sheets = asyncio.run(scraper.main())
         print("----------------------------------REPORTING-STARTED----------------------------------")
