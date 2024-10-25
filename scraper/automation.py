@@ -8,6 +8,7 @@ from lxml import etree
 import pandas as pd
 from tables_function import *
 from report_maker import Reporter
+from argparse import ArgumentParser
 
 
 class Scraper:
@@ -18,7 +19,7 @@ class Scraper:
 
         # all xpath which will be needed at following
         self.xpath_dict = {
-            "box_scores": "//a[@class='link' and ./span[2][contains(text(), 'Box Score')]]",
+            "box_scores": "//a[contains(@class, 'link') and ./span[2][contains(text(), 'Box Score')]]",
             "first_q_tab": "//a[contains(text(), '1st Qtr')]",
             "overtime_tab": "//a[contains(@data-view, 'period5')]",
             "header": "//div[@class = 'head']/h1//text()",
@@ -164,20 +165,6 @@ class Scraper:
         else:
             return False
 
-    def header_sep(self, header: etree._Element, separator: str) -> Tuple[str, str]:
-        """
-        Takes a header with home & visitor teams name inside it,
-        then tries to provide names from it using sseperator
-
-        header: header with home and visitor name in it
-        separator: string between two name
-        """
-
-        visitor_team = header.split(separator)[0].strip()
-        home_team = header.split(separator)[1].strip()
-
-        return home_team, visitor_team
-
     async def get_sheet_name(self, soup: Optional[BeautifulSoup]) -> Optional[Tuple[str, str, str, str]]:
         """
         providing final sheet name by template heading and date
@@ -187,42 +174,13 @@ class Scraper:
 
         await asyncio.sleep(0)
         header = self.find_xpath(soup, self.xpath_dict["header"])
+        header = [el for el in header if el not in ('', ' ')]
 
-        # some matches heading are separated in different ways
-        if len(header) == 2:
-            try:
-                home_team, visitor_team = self.header_sep(header[0], " at ")
-            except IndexError:
-                try:
-                    home_team, visitor_team = self.header_sep(header[0], " vs. ")
-                except IndexError:
-                    home_team, visitor_team = self.header_sep(header[0], " vs ")
-
-            date_of_match = datetime.strptime(header[1], "%B %d, %Y").strftime("%m_%d_%Y")
-            sheet_name = f"{home_team}_{visitor_team}_{date_of_match}.csv"
-
-            return sheet_name, home_team, visitor_team, date_of_match
-
-        # minor condition
-        elif len(header) > 2:
-            while " " in header:
-                header.remove(" ")
-
-            header = [info.strip() for info in header]
-            try:
-                header.remove("at")
-            except:
-                try:
-                    header.remove("vs")
-                except:
-                    header.remove("vs.")
-
+        if len(header) > 0:
             visitor_team = header[0]
-            home_team = header[1]
-            date_of_match = datetime.strptime(header[2], "%B %d, %Y").strftime("%m_%d_%Y")
-
+            home_team = header[2]
+            date_of_match = datetime.strptime(header[-1], "%B %d, %Y").strftime("%m_%d_%Y")
             sheet_name = f"{home_team}_{visitor_team}_{date_of_match}.csv"
-
             return sheet_name, home_team, visitor_team, date_of_match
 
         else:
@@ -545,8 +503,12 @@ class Scraper:
             return added_sheets
 
 if __name__ == "__main__":
+    parser = ArgumentParser(description="Taking scraping season")
+    parser.add_argument("-s", "--season", type=str, help="Chosen season to scrape; format: YYYY-YY")
+    args = parser.parse_args()
+
     for gender in ["women", "men"]:
-        scraper = Scraper(gender, "2023-24", 25)
+        scraper = Scraper(gender, args.season, 25)
         reporter = Reporter(gender, 25)
         added_sheets = asyncio.run(scraper.main())
         print("----------------------------------REPORTING-STARTED----------------------------------")
