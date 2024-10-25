@@ -164,20 +164,6 @@ class Scraper:
         else:
             return False
 
-    def header_sep(self, header: etree._Element, separator: str) -> Tuple[str, str]:
-        """
-        Takes a header with home & visitor teams name inside it,
-        then tries to provide names from it using sseperator
-
-        header: header with home and visitor name in it
-        separator: string between two name
-        """
-
-        visitor_team = header.split(separator)[0].strip()
-        home_team = header.split(separator)[1].strip()
-
-        return home_team, visitor_team
-
     async def get_sheet_name(self, soup: Optional[BeautifulSoup]) -> Optional[Tuple[str, str, str, str]]:
         """
         providing final sheet name by template heading and date
@@ -187,42 +173,13 @@ class Scraper:
 
         await asyncio.sleep(0)
         header = self.find_xpath(soup, self.xpath_dict["header"])
+        header = [el for el in header if el not in ('', ' ')]
 
-        # some matches heading are separated in different ways
-        if len(header) == 2:
-            try:
-                home_team, visitor_team = self.header_sep(header[0], " at ")
-            except IndexError:
-                try:
-                    home_team, visitor_team = self.header_sep(header[0], " vs. ")
-                except IndexError:
-                    home_team, visitor_team = self.header_sep(header[0], " vs ")
-
-            date_of_match = datetime.strptime(header[1], "%B %d, %Y").strftime("%m_%d_%Y")
-            sheet_name = f"{home_team}_{visitor_team}_{date_of_match}.csv"
-
-            return sheet_name, home_team, visitor_team, date_of_match
-
-        # minor condition
-        elif len(header) > 2:
-            while " " in header:
-                header.remove(" ")
-
-            header = [info.strip() for info in header]
-            try:
-                header.remove("at")
-            except:
-                try:
-                    header.remove("vs")
-                except:
-                    header.remove("vs.")
-
+        if len(header) > 0:
             visitor_team = header[0]
-            home_team = header[1]
-            date_of_match = datetime.strptime(header[2], "%B %d, %Y").strftime("%m_%d_%Y")
-
+            home_team = header[2]
+            date_of_match = datetime.strptime(header[-1], "%B %d, %Y").strftime("%m_%d_%Y")
             sheet_name = f"{home_team}_{visitor_team}_{date_of_match}.csv"
-
             return sheet_name, home_team, visitor_team, date_of_match
 
         else:
