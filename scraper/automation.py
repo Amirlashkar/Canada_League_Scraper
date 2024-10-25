@@ -18,7 +18,7 @@ class Scraper:
 
         # all xpath which will be needed at following
         self.xpath_dict = {
-            "box_scores": "//a[@class='link' and ./span[2][contains(text(), 'Box Score')]]",
+            "box_scores": "//a[contains(@class, 'link') and ./span[2][contains(text(), 'Box Score')]]",
             "first_q_tab": "//a[contains(text(), '1st Qtr')]",
             "overtime_tab": "//a[contains(@data-view, 'period5')]",
             "header": "//div[@class = 'head']/h1//text()",
