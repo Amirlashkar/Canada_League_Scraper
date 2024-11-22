@@ -13,12 +13,20 @@
 
 .container {
   position: absolute;
-  width: 100px;
-  height: 30px;
+  width: 50px;
+  height: 20px;
   border-radius: 100px;
   background: rgb(7, 7, 7);
   cursor: pointer;
   transition: box-shadow 0.4s ease;
+}
+
+.switch-padding {
+  padding-left: 4%;
+}
+
+.switch-extra-margin {
+  margin-right: 34%;
 }
 
 .switch-margin {

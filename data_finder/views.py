@@ -105,14 +105,14 @@ def analytics(request):
             table = pd.read_csv(table_path)
 
             # choosing showing tables to user
-            if PL == "players":
+            if PL == "Players":
                 table = table.reindex(columns=show_table)
             else:
                 table = table.reindex(columns=lineup_show_table)
 
             # this function iterates over data and tries to summerize floats by two digits after floating-point and save them on new data
             # sorting players table alphabetically for the first time
-            if PL == "players":
+            if PL == "Players":
                 table = table.sort_values(by="Player Name", ascending=True)
 
             table = table.rename(columns={"minutes": "time"})
@@ -210,41 +210,42 @@ def events(request):
         "HV": request.session["HV"],
     }
 
-    if "find-events" in request.POST:
-        HV = request.session["HV"]
-        table_path = os.path.join(
-            request.session["tables_path"],
-            request.session["home"],
-            request.session["visitor"],
-            request.session["selected_date"],
-            HV,
-            "PAllEvents.csv"
-        )
+    HV = request.session["HV"]
+    PL = request.session["PL"]
+    table_path = os.path.join(
+        request.session["tables_path"],
+        request.session["home"],
+        request.session["visitor"],
+        request.session["selected_date"],
+        HV,
+        f"{PL[0]}AllEvents.csv"
+    )
 
-        table = pd.read_csv(table_path)
-        try:
-            table = table.drop(columns=table.filter(like="poss").columns)
-        except:
-            pass
+    table = pd.read_csv(table_path)
+    try:
+        table = table.drop(columns=table.filter(like="poss").columns)
+    except:
+        pass
 
-        try:
-            table = table.drop(columns=table.filter(like="Unnamed").columns)
-        except:
-            pass
+    try:
+        table = table.drop(columns=table.filter(like="Unnamed").columns)
+    except:
+        pass
 
-        # sorting players table alphabetically for the first time
+    # sorting players table alphabetically for the first time
+    if PL == "Players":
         table = table.sort_values(by="Player Name", ascending=True)
 
-        data = table.to_numpy()
-        data = data_showoff(data)
+    data = table.to_numpy()
+    data = data_showoff(data)
 
-        request.session["table"] = table.to_dict()
+    request.session["table"] = table.to_dict()
 
-        render_dict["theaders"] = ["#" + col if col != "Player Name" else col for col in table.columns]
-        render_dict["next_rows"] = data
-        render_dict["result"] = True
+    render_dict["theaders"] = ["#" + col if col not in ("Player Name", "Lineup") else col for col in table.columns]
+    render_dict["next_rows"] = data
+    render_dict["result"] = True
 
-    elif "back" in request.POST:
+    if "back" in request.POST:
         return redirect("df_analytics")
 
     elif "sort" in request.POST:
@@ -256,10 +257,7 @@ def events(request):
         data = data.to_numpy()
         data = data_showoff(data)
 
-        render_dict["theaders"] = ["#" + col if col != "Player Name" else col for col in table.columns]
-        render_dict["next_rows"] = data
         render_dict["reset_available"] = True
-        render_dict["result"] = True
         render_dict["selected_col"] = "#" + selected_col
 
     return render(request, "df_events.html", render_dict)
@@ -272,12 +270,11 @@ def lineup_eval(request):
         return redirect("is_superuser")
 
     render_dict = {}
-    inventory_csv = pd.DataFrame(request.session["inv_csv"])
+    inventory_csv = pd.DataFrame(eval(request.session["inv_csv"]))
     render_dict["home_teams"] = sorted(np.unique(inventory_csv["Home"].to_list()))
     render_dict["visitor_teams"] = sorted(np.unique(inventory_csv["Visitor"].to_list()))
-    
-    if "find-dates" in request.POST:
 
+    if "find-dates" in request.POST:
         home_team = request.session["home"] = request.POST["home-team"]
         visitor_team = request.session["visitor"] = request.POST["visitor-team"]
 
@@ -314,9 +311,9 @@ def lineup_eval(request):
         date = request.session["date"] = request.POST["date"].replace("/", "_")
 
         filename = home + "_" + visitor + "_" + date + ".csv"
-        file_path = os.path.join(os.path.dirname(request.session["inv_path"]), filename)
+        file_path = os.path.join(os.path.dirname(request.session["inv_path"]), "..", "rows", filename)
         raw_data = pd.read_csv(file_path)
-        
+
         # declaring HV variable to get right list of player for Carleton ;
         # this line should be changed if data analyze is implemented on all teams
         HV = render_dict["HV"] = request.session["HV"]
@@ -330,7 +327,6 @@ def lineup_eval(request):
         render_dict["reset_available"] = True
 
     elif "submit-lineup" in request.POST:
-        
         home = request.session["home"]
         visitor = request.session["visitor"]
         date = request.session["date"]
@@ -338,7 +334,7 @@ def lineup_eval(request):
         HV = render_dict["HV"] = request.session["HV"]
         lineup_table_path = os.path.join(request.session["tables_path"], home, visitor, date, HV, "LFinalTable.csv")
         lineup_table = pd.read_csv(lineup_table_path)
-        
+
         # taking chosen players on template into a list
         chosen_players = []
         for num in range(1, 6):

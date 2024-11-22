@@ -16,41 +16,61 @@ Seasonal Events Finder
 
 
 <body>
-  <div class="title col-md-6 offset-md-3 row">
-    <img class="analyze-icon" src="{% static 'icons/events.png' %}" width="32" height="32">
-    <h1>
-      Seasonal Events Finder
-    </h1>
-  </div>
   <form action="" method="post">
     {% csrf_token %}
-    <div class="col-md-6 offset-md-3 center main-panel">
-      <h4>Find players event table</h4>
-      <hr class="line">
-      <div class="row bring-center row-margin">
-        <div class="col-md-12">
-          <p>Team</p>
-          <label class="bring-center">
-            {{request.session.team}}
-          </label>
+    <div class="col-md-6 offset-md-3 row first-row">
+      <div class="col-md-6">
+        <div class="row">
+          <img class="heading-icon" src="{% static 'icons/season.png' %}" width="32" height="32">
+          <h1 class="heading">
+            Seasonal Events Finder
+          </h1>
+        </div>
+        <div class="row">
+          <h4 class="panel-hint">
+            Find players event table
+          </h4>
+        </div>
+
+        <div class="row">
+          <div class="col-md-2 remove-leftpad">
+            <h4 class="num-cube">
+              1
+            </h4>
+          </div>
+          <div class="col-md-10 remove-leftpad">
+            <h4 class="input-heading">
+              Team
+            </h4>
+          </div>
+        </div>
+        <div class="row inter-input-margin">
+          <div class="col-md-10 offset-md-2 remove-leftpad">
+            <label class="submit-input">
+              {{team}}
+            </label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-10 offset-md-2 remove-leftpad">
+            <button class="explore-button" name="back">
+              <img class="find-icon" src="{% static 'icons/back.png' %}" width="32" height="32">
+              <span class="find">
+                Back
+              </span>
+            </button>
+          </div>
         </div>
       </div>
-      <div class="row bring-center">
-        <button class="row my-btn bring-center line-find" name="find-events">
-          <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
-          <span class="find">
-            Find
-          </span>
-        </button>
-        <button class="row my-btn bring-center line-find" name="back">
-          <img class="find-icon" src="{% static 'icons/back.png' %}" width="32" height="32">
-          <span class="find">
-            Back
-          </span>
-        </button>
+
+      <div class="col-md-6">
+        <div class="row inter-input-margin">
+          <img class="side-image" src="{% static 'images/players_stats.avif' %}" width="384" height="512">
+        </div>
       </div>
     </div>
-    {% if result %}
+
     <div class="col-md-10 offset-md-1 center main-panel result-panel text-center">
       <p class="row">
         <img class="find-icon" src="{% static 'icons/hint.png' %}" width="20" height="20">
@@ -100,7 +120,6 @@ Seasonal Events Finder
         </tbody>
       </table>
     </div>
-    {% endif %}
   </form>
   <script type="text/javascript" src="{% static 'js/switch.js' %}"></script>
 </body>

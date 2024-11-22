@@ -11,7 +11,7 @@
 <body>
   <form action="" method="post">
     {% csrf_token %}
-    <div class="col-md-6 offset-md-3 main-panel">
+    <div class="col-md-6 offset-md-3 tool-panel">
       <div class="row col-md-6 offset-md-3 bring-center caution">
         {% if is_superuser == 'True' %}
         <input type="submit" id="admin_link" name="logout" hidden>
@@ -31,19 +31,13 @@
           <div class="light"></div>
         </div>
       </div>
+
       {% if is_superuser == 'True' %}
       {% if not data_finder and not season%}
       <div class="row col-md-6 offset-md-3 bring-center caution">
-        <div class="col-md-2">
+        <div class="col-md-6">
           <label>Men</label>
         </div>
-        <svg id="noise-svg">
-          <filter id='noiseFilter'>
-            <feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch' />
-          </filter>
-          <rect id="noise-rect" filter='url(#noiseFilter)' />
-        </svg>
-        
         <input type="hidden" name="mw" id="mw" value="women">
         <div id="dynamic_mw" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
           <div class="toggle">
@@ -52,37 +46,51 @@
             <div class="detail"></div>
           </div>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-6">
           <label>
             Women
           </label>
         </div>
       </div>
-      <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" name="data_finder">
-        Match Finder
-      </button>
-      <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" name="season">
-        Season Reporter
-      </button>
+
+      <div class="row col-md-10 offset-md-1">
+        <div class="col-md-6">
+          <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" name="data_finder">
+            Match Finder
+          </button>
+        </div>
+        <div class="col-md-6">
+          <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" name="season">
+            Season Reporter
+          </button>
+        </div>
+      </div>
+
       {% else %}
-      <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" 
-        {% if data_finder %}
-        name="df_analytics">
-        Match Information
-        {% else %}
-        name="sr_analytics">
-        Players Stats
-        {% endif %}
-      </button>
-      <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" 
-        {% if data_finder %}
-        name="df_lineup_eval"
-        {% else %}
-        name="sr_lineup_eval"
-        {% endif %}
-        >
-        Lineup Evaluation
-      </button>
+      <div class="row col-md-10 offset-md-1">
+        <div class="col-md-6">
+          <button class="row col-md-10 offset-md-1 bring-center tool tool-btn"
+            {% if data_finder %}
+            name="df_analytics">
+            Match Information
+            {% else %}
+            name="sr_analytics">
+            Players Stats
+            {% endif %}
+          </button>
+        </div>
+        <div class="col-md-6">
+          <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" 
+            {% if data_finder %}
+            name="df_lineup_eval"
+            {% else %}
+            name="sr_lineup_eval"
+            {% endif %}
+            >
+            Lineup Evaluation
+          </button>
+        </div>
+      </div>
       {% endif %}
       {% endif %}
     </div>

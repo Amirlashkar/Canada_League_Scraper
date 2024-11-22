@@ -4,6 +4,7 @@
 # load libraries
 import numpy as np
 import pandas as pd
+import ast
 
 pd.set_option("display.max_colwidth", None)
 import ast, asyncio, difflib, os, re, sys
@@ -52,6 +53,9 @@ def list_players(df: pd.DataFrame, quarter_index: int, HorV: str) -> Tuple[List[
 
     # reading dictionary of players name from string on quarter row
     p_dict = df.iloc[quarter_index][HorV]
+    if isinstance(p_dict, str):
+        p_dict = ast.literal_eval(p_dict)
+
     p_list = p_dict["starters"].copy()
     # adding reserve players to players list and removing 'Team' if on players list
     p_list.extend(p_dict["reserves"])
