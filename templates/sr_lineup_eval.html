@@ -15,86 +15,120 @@ Seasonal Lineup Evaluation
 </head>
 
 <body>
-  <div class="title col-md-6 offset-md-3 row">
-    <img class="analyze-icon" src="{% static 'icons/season.png' %}" width="32" height="32">
-    <h1>
-      Full Season Lineup Evaluation
-    </h1>
-  </div>
   <form action="" method="post">
     {% csrf_token %}
-    <div class="col-md-6 offset-md-3 center main-panel">
-      <h4>Find seasonal data</h4>
-      <hr class="line">
-      {% if not selected_team %}
-      <div class="row bring-center">
-        <div class="col-md-6">
-          <p>Team</p>
-          <select name="team">
-            {% for team in teams %}
-            <option value="{{team}}">{{team}}</option>
-            {% endfor %}
-          </select>
+    <div class="col-md-6 offset-md-3 row first-row">
+      <div class="col-md-6">
+        <div class="row">
+          <img class="heading-icon" src="{% static 'icons/season.png' %}" width="32" height="32">
+          <h1 class="heading">
+            Full Season Lineup Evaluation
+          </h1>
         </div>
-      </div>
-      {% if not players %}
-      <div class="row bring-center">
-        <button class="row my-btn bring-center line-find" name="find-data">
-          <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
-          <span class="find">
-            Find
-          </span>
-        </button>
-      </div>
-      {% endif %}
-      {% else %}
-      <div class="row bring-center row-margin">
-        <div class="col-md-6">
-          <p>Team</p>
-          <span>
-            {{selected_team}}
-          </span>
+        <div class="row">
+          <h4 class="panel-hint">
+            Find seasonal data
+          </h4>
         </div>
-      </div>
-      {% if players %}
-      <div class="row bring-center row-margin">
-        <div class="col-md-12">
-          <p>Lineup</p>
+
+        <div class="row">
+          <div class="col-md-2 remove-leftpad">
+            <h4 class="num-cube">
+              1
+            </h4>
+          </div>
+          <div class="col-md-10 remove-leftpad">
+            <h4 class="input-heading">
+              Team
+            </h4>
+          </div>
+        </div>
+        <div class="row inter-input-margin">
+          <div class="col-md-10 offset-md-2 remove-leftpad">
+            {% if selected_team %}
+            <label class="submit-input">
+              {{selected_team}}
+            </label>
+            {% else %}
+            <select name="team">
+              {% for team in teams %}
+              <option value="{{team}}">{{team}}</option>
+              {% endfor %}
+            </select>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if players %}
+        <div class="row">
+          <div class="col-md-2 remove-leftpad">
+            <h4 class="num-cube">
+              2
+            </h4>
+          </div>
+          <div class="col-md-10 remove-leftpad">
+            <h4 class="input-heading">
+              Lineup
+            </h4>
+          </div>
+        </div>
+        <div class="row inter-input-margin">
+          <div class="col-md-10 offset-md-2 remove-leftpad">
           {% for num in "12345"|make_list %}
-          <select name="p{{num}}">
+          <select class="player-dropdown" name="p{{num}}">
             {% for p in players %}
             <option value="{{p}}">{{p}}</option>
             {% endfor %}
           </select>
           {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="row">
+          <div class="col-md-10 offset-md-2 remove-leftpad">
+            {% if players %}
+            <button class="explore-button" name="submit-lineup">
+              <img class="find-icon" src="{% static 'icons/submit.png' %}" width="32" height="32">
+              <span class="find">
+                Submit Lineup
+              </span>
+            </button>
+            {% else %}
+            <button class="explore-button" name="find-data">
+              <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
+              <span class="find">
+                Explore
+              </span>
+            </button>
+            {% endif %}
+            {% if selected_team %}
+            <button class="explore-button" name="reset">
+              <img class="find-icon" src="{% static 'icons/reset.png' %}" width="32" height="32">
+              <span class="find">
+                Reset
+              </span>
+            </button>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if no_data %}
+        <div class="row bring-center row-margin">
+          <label class="col-md-10 offset-md-2 error-box">
+            No such lineup found on database
+          </label>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="col-md-6">
+        <div class="row">
+          <img class="side-image" src="{% static 'images/match_finder.avif' %}" width="384" height="512">
         </div>
       </div>
-      {% endif %}
-      <div class="row bring-center">
-        {% if players %}
-        <button class="row my-btn bring-center line-find" name="submit-lineup">
-          <img class="find-icon" src="{% static 'icons/submit.png' %}" width="32" height="32">
-          <span class="find">
-            Submit Lineup
-          </span>
-        </button>
-        {% endif %}
-        <button class="row my-btn bring-center line-find" name="reset">
-          <img class="find-icon" src="{% static 'icons/reset.png' %}" width="32" height="32">
-          <span class="find">
-            Reset
-          </span>
-        </button>
-      </div>
-      {% endif %}
-      {% if no_data %}
-      <div class="row bring-center row-margin">
-        <label>
-          No such lineup found on database
-        </label>
-      </div>
-      {% endif %}
     </div>
+
     {% if result %}
     <div class="col-md-10 offset-md-1 center main-panel result-panel">
       <table class="table-width" cellpadding="0" cellspacing="0" border="0">

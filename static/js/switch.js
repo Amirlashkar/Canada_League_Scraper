@@ -5,9 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to update the input value
     function updateInputValue() {
         if (statusElement.classList.contains('on')) {
-            inputElement.value = 'lineups';
+            inputElement.value = 'Lineups';
         } else if (statusElement.classList.contains('off')) {
-            inputElement.value = 'players';
+            inputElement.value = 'Players';
         }
     }
 

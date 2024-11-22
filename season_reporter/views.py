@@ -25,7 +25,7 @@ def analytics(request):
         data_path = os.path.join(request.session["reports_path"], team, f"{PL.upper()[0]}SeasonalReport.csv")
         table = pd.read_csv(data_path)
 
-        if PL == "players":
+        if PL == "Players":
             table = table.reindex(columns=show_table)
             # CAUTION: last 5min efficiencies should first become measured to be shown
             table = table.drop(columns=table.filter(like="last").columns)
@@ -36,9 +36,9 @@ def analytics(request):
             table = table.drop(columns=table.filter(like="Unnamed").columns)
         except:
             pass
-        
+
         # sorting players table alphabetically for the first time
-        if PL == "players":
+        if PL == "Players":
             table = table.sort_values(by="Player Name", ascending=True)
 
         table = table.rename(columns={"minutes": "time"})
@@ -46,14 +46,16 @@ def analytics(request):
         data_["time"] = data_.apply(lambda row: convert_min(row["time"]), axis=1)
         data = data_.to_numpy()
         data = data_showoff(data)
- 
+
         request.session["table"] = table.to_dict()
+        request.session["PL"] = PL
 
         render_dict["theaders"] = data_.columns
         render_dict["next_rows"] = data
         render_dict["result"] = True
         render_dict["events"] = True
         render_dict["selected_team"] = request.session["selected_team"] = team
+        render_dict["PL"] = PL
 
     elif "events" in request.POST:
         return redirect("sr_events")
@@ -74,6 +76,7 @@ def analytics(request):
         render_dict["events"] = True
         render_dict["selected_col"] = selected_col
         render_dict["selected_team"] = request.session["selected_team"]
+        render_dict["PL"] = request.session["PL"]
 
     elif "reset" in request.POST:
         try:
@@ -93,37 +96,40 @@ def events(request):
 
     render_dict = {}
 
-    if "find-events" in request.POST:
-        report_path = os.path.join(
-            request.session["reports_path"],
-            request.session["team"],
-            "PEventsSeasonalReport.csv",
-        )
+    team = request.session["team"]
+    PL = request.session["PL"]
+    report_path = os.path.join(
+        request.session["reports_path"],
+        request.session["team"],
+        f"{PL[0]}EventsSeasonalReport.csv",
+    )
 
-        report = pd.read_csv(report_path)
-        try:
-            report = report.drop(columns=report.filter(like="poss").columns)
-        except:
-            pass
+    report = pd.read_csv(report_path)
+    try:
+        report = report.drop(columns=report.filter(like="poss").columns)
+    except:
+        pass
 
-        try:
-            report = report.drop(columns=report.filter(like="Unnamed").columns)
-        except:
-            pass
+    try:
+        report = report.drop(columns=report.filter(like="Unnamed").columns)
+    except:
+        pass
 
-        # sorting players table alphabetically for the first time
+    # sorting players table alphabetically for the first time
+    if PL == "Players":
         report = report.sort_values(by="Player Name", ascending=True)
 
-        data = report.to_numpy()
-        data = data_showoff(data)
+    data = report.to_numpy()
+    data = data_showoff(data)
 
-        request.session["report"] = report.to_dict()
+    request.session["report"] = report.to_dict()
 
-        render_dict["theaders"] = ["#" + col if col != "Player Name" else col for col in report.columns]
-        render_dict["next_rows"] = data
-        render_dict["result"] = True
+    render_dict["theaders"] = ["#" + col if col not in ("Player Name", "Lineup") else col for col in report.columns]
+    render_dict["next_rows"] = data
+    render_dict["team"] = team
+    render_dict["result"] = True
 
-    elif "back" in request.POST:
+    if "back" in request.POST:
         return redirect("sr_analytics")
 
     elif "sort" in request.POST:
@@ -135,10 +141,7 @@ def events(request):
         data = data.to_numpy()
         data = data_showoff(data)
 
-        render_dict["theaders"] = ["#" + col if col != "Player Name" else col for col in report.columns]
-        render_dict["next_rows"] = data
         render_dict["reset_available"] = True
-        render_dict["result"] = True
         render_dict["selected_col"] = "#" + selected_col
 
     return render(request, "sr_events.html", render_dict)
@@ -170,7 +173,7 @@ def lineup_eval(request):
         chosen_players = []
         for num in range(1, 6):
             chosen_players.append(request.POST[f"p{num}"])
-        
+
         chosen_players = str(tuple(sorted(chosen_players)))
         table = lineup_table.loc[lineup_table["Lineup"] == chosen_players]
         if not table.empty:

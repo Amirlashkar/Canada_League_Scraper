@@ -14,179 +14,302 @@ Match Information
   <link type="text/css" rel="stylesheet" href="{% static 'css/switch.css' %}"/>
 </head>
 <body>
-  <div class="title col-md-6 offset-md-3 row">
-    <img class="analyze-icon" src="{% static 'icons/analyze.png' %}" width="32" height="32">
-    <h1>
-      Match Information
-    </h1>
-  </div>
   <form action="" method="post">
     {% csrf_token %}
-    <div class="col-md-6 offset-md-3 center main-panel">
-      <h4>Specify match info</h4>
-      <hr class="line">
-      <div class="row bring-center row-margin">
-        <div class="col-md-4">
-          <p>Home</p>
-          {% if reset_available %}
-          <label class="bring-center">
-            {{home}}
-          </label>
-          {% else %}
-          <select name="home-team">
-            {% for team in home_teams %}
-            <option value="{{team}}">{{team}}</option>
-            {% endfor %}
-          </select>
-          {% endif %}
+    <div class="col-md-6 offset-md-3 row first-row">
+      <div class="col-md-6">
+        <div class="row">
+          <img class="heading-icon" src="{% static 'icons/analyze.png' %}" width="32" height="32">
+          <h1 class="heading">
+            Match Information
+          </h1>
         </div>
-        <div class="col-md-4">
-          {% if not HV %}
-          <div class="row bring-center">
-            <p>Choose Side</p>
+        <div class="row">
+          <h4 class="panel-hint">
+            Specify match info
+          </h4>
+        </div>
+
+        <div class="row">
+          <div class="col-md-2 remove-leftpad">
+            <h4 class="num-cube">
+              1
+            </h4>
           </div>
-          <div class="row bring-center">
-            <svg id="noise-svg">
-              <filter id='noiseFilter'>
-                <feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch' />
-              </filter>
-              <rect id="noise-rect" filter='url(#noiseFilter)' />
-            </svg>
-            
-            <input type="hidden" name="hv" id="hv" value="Visitor">
-            <div id="dynamic_hv" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
-              <div class="toggle">
-                <div class="detail"></div>
-                <div class="detail"></div>
-                <div class="detail"></div>
+          <div class="col-md-10 remove-leftpad">
+            <h4 class="input-heading">
+              Home
+            </h4>
+          </div>
+        </div>
+        <div class="row inter-input-margin">
+          <div class="col-md-10 offset-md-2 remove-leftpad">
+            {% if reset_available %}
+            <label class="submit-input">
+              {{home}}
+            </label>
+            {% else %}
+            <select name="home-team">
+              {% for team in home_teams %}
+              <option value="{{team}}">{{team}}</option>
+              {% endfor %}
+            </select>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-2 remove-leftpad">
+            <h4 class="num-cube">
+              2
+            </h4>
+          </div>
+          <div class="col-md-10 remove-leftpad">
+            <h4 class="input-heading">
+              Visitor
+            </h4>
+          </div>
+        </div>
+        <div class="row inter-input-margin">
+          <div class="col-md-10 offset-md-2 remove-leftpad">
+            {% if reset_available %}
+            <label class="submit-input">
+              {{visitor}}
+            </label>
+            {% else %}
+            <select name="visitor-team">
+              {% for team in visitor_teams %}
+              <option value="{{team}}">{{team}}</option>
+              {% endfor %}
+            </select>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if not HV %}
+        <div class="row">
+          <div class="col-md-2 remove-leftpad">
+            <h4 class="num-cube">
+              3
+            </h4>
+          </div>
+          <div class="col-md-10 remove-leftpad">
+            <h4 class="input-heading">
+              Choose side
+            </h4>
+          </div>
+        </div>
+        <div class="row inter-input-margin switch-extra-margin">
+          <div class="col-md-10 offset-md-2 remove-leftpad">
+            <div class="row">
+              <div class="col-md-4 H-align">
+                <p>
+                  H
+                </p>
+              </div>
+              <div class="col-md-4 switch-padding">
+                <input type="hidden" name="hv" id="hv" value="Visitor">
+                <div id="dynamic_hv" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
+                  <div class="toggle">
+                    <div class="detail"></div>
+                    <div class="detail"></div>
+                    <div class="detail"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <p>
+                  V
+                </p>
               </div>
             </div>
           </div>
-          {% else %}
-          <div class="row bring-center">
-            <p>Chosen Side</p>
+        </div>
+        {% else %}
+        <div class="row">
+          <div class="col-md-2 remove-leftpad">
+            <h4 class="num-cube">
+              3
+            </h4>
           </div>
-          <div class="row bring-center">
-            <label class="bring-center">
+          <div class="col-md-10 remove-leftpad">
+            <h4 class="input-heading">
+              Chosen side
+            </h4>
+          </div>
+        </div>
+        <div class="row inter-input-margin">
+          <div class="col-md-10 offset-md-2 remove-leftpad">
+            <label class="submit-input">
               {{HV}}
             </label>
           </div>
-          {% endif %}
         </div>
-        <div class="col-md-4">
-          <p>Visitor</p>
-          {% if reset_available %}
-          <label class="bring-center">
-            {{visitor}}
-          </label>
-          {% else %}
-          <select name="visitor-team">
-            {% for team in visitor_teams %}
-            <option value="{{team}}">{{team}}</option>
-            {% endfor %}
-          </select>
-          {% endif %}
-        </div>
-      </div>
-      {% if selected_date %}
-      <div class="row bring-center row-margin">
-        <div class="col-md-6">
-          <p>Date</p>
-          <label class="bring-center">
-            {{selected_date}}
-          </label>
-        </div>
-      </div>
-      {% endif %}
-      {% if dates %}
-      <div class="row bring-center row-margin">
-        <div class="col-md-6">
-          <p>Dates</p>
-          <select name="date">
-            {% for date in dates %}
-            <option value="{{date}}">{{date}}</option>
-            {% endfor %}
-          </select>
-        </div>
-      </div>
-      <div class="row bring-center switch-margin">
-        <p>Choose Table</p>
-      </div>
-      <div class="row bring-center">
-        <div class="col-md-2">
-          <label>Players</label>
-        </div>
-        <svg id="noise-svg">
-          <filter id='noiseFilter'>
-            <feTurbulence type='fractalNoise' baseFrequency='0.5' numOctaves='3' stitchTiles='stitch' />
-          </filter>
-          <rect id="noise-rect" filter='url(#noiseFilter)' />
-        </svg>
-        
-        <input type="hidden" name="pl" id="pl" value="lineups">
-        <div id="dynamic_pl" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
-          <div class="toggle">
-            <div class="detail"></div>
-            <div class="detail"></div>
-            <div class="detail"></div>
+        {% endif %}
+
+        {% if dates %}
+        <div class="row">
+          <div class="col-md-2 remove-leftpad">
+            <h4 class="num-cube">
+              4
+            </h4>
+          </div>
+          <div class="col-md-10 remove-leftpad">
+            <h4 class="input-heading">
+              Dates
+            </h4>
           </div>
         </div>
-        <div class="col-md-2">
-          <label>
-            Lineups
-          </label>
+        <div class="row">
+          <div class="col-md-10 offset-md-2 remove-leftpad inter-input-margin">
+            <select name="date">
+              {% for date in dates %}
+              <option value="{{date}}">{{date}}</option>
+              {% endfor %}
+            </select>
+          </div>
         </div>
-      </div>
-      {% endif %}
-      <div class="row bring-center">
+        {% endif %}
+        {% if selected_date %}
+        <div class="row">
+          <div class="col-md-2 remove-leftpad">
+            <h4 class="num-cube">
+              4
+            </h4>
+          </div>
+          <div class="col-md-10 remove-leftpad">
+            <h4 class="input-heading">
+              Date
+            </h4>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-10 offset-md-2 remove-leftpad inter-input-margin">
+            <label class="submit-input">
+              {{selected_date}}
+            </label>
+          </div>
+        </div>
+        {% endif %}
+
         {% if dates %}
-        <button class="row my-btn bring-center line-find" name="submit-match">
-          <img class="find-icon" src="{% static 'icons/submit.png' %}" width="32" height="32">
-          <span class="find">
-            Submit
-          </span>
-        </button>
+        <div class="row">
+          <div class="col-md-2 remove-leftpad">
+            <h4 class="num-cube">
+              5
+            </h4>
+          </div>
+          <div class="col-md-10 remove-leftpad">
+            <h4 class="input-heading">
+              Choose Table
+            </h4>
+          </div>
+        </div>
+        <div class="row inter-input-margin switch-extra-margin">
+          <div class="col-md-10 offset-md-2 remove-leftpad">
+            <div class="row">
+              <div class="col-md-4 H-align">
+                <p>
+                  P
+                </p>
+              </div>
+              <div class="col-md-4 switch-padding">
+              <input type="hidden" name="pl" id="pl" value="Lineups">
+              <div id="dynamic_pl" class="container on" onclick="this.classList.toggle('off'); this.classList.toggle('on')">
+                <div class="toggle">
+                  <div class="detail"></div>
+                  <div class="detail"></div>
+                  <div class="detail"></div>
+                </div>
+              </div>
+              </div>
+              <div class="col-md-4">
+                <p>
+                  L
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
         {% else %}
-        {% if not result and not home %}
-        <button class="row my-btn bring-center line-find" name="find-dates">
-          <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
-          <span class="find">
-            Find
-          </span>
-        </button>
+        {% if PL %}
+        <div class="row">
+          <div class="col-md-2 remove-leftpad">
+            <h4 class="num-cube">
+              5
+            </h4>
+          </div>
+          <div class="col-md-10 remove-leftpad">
+            <h4 class="input-heading">
+              Chosen Table
+            </h4>
+          </div>
+        </div>
+        <div class="row inter-input-margin">
+          <div class="col-md-10 offset-md-2 remove-leftpad">
+            <label class="submit-input">
+              {{PL}}
+            </label>
+          </div>
+        </div>
         {% endif %}
         {% endif %}
-        {% if reset_available %}
-        <button class="row my-btn bring-center line-find" name="reset">
-          <img class="find-icon" src="{% static 'icons/reset.png' %}" width="32" height="32">
-          <span class="find">
-            Reset
-          </span>
-        </button>
+
+        <div class="row">
+          <div class="col-md-10 offset-md-2 remove-leftpad">
+            {% if dates %}
+            <button class="explore-button" name="submit-match">
+              <img class="find-icon" src="{% static 'icons/submit.png' %}" width="32" height="32">
+              <span class="find">
+                Submit
+              </span>
+            </button>
+            {% else %}
+            {% if not result and not home %}
+            <button class="explore-button" name="find-dates">
+              <img class="find-icon" src="{% static 'icons/find.png' %}" width="32" height="32">
+              <span class="find">
+                Explore
+              </span>
+            </button>
+            {% endif %}
+            {% endif %}
+            {% if reset_available %}
+            <button class="explore-button" name="reset">
+              <img class="find-icon" src="{% static 'icons/reset.png' %}" width="32" height="32">
+              <span class="find">
+                Reset
+              </span>
+            </button>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if no_dates %}
+        <div class="row bring-center row-margin">
+            <label class="col-md-10 offset-md-2 error-box">
+              No such match found on database
+            </label>
+        </div>
         {% endif %}
       </div>
-      {% if no_dates %}
-      <div class="row bring-center row-margin">
-        <label>
-          No such match found on database
-        </label>
-      </div>
-      {% endif %}
-    </div>
-    {% if events %}
-    <div class="col-md-2 offset-md-5 center main-panel events">
-      <div class="row bring-center">
-        <button class="row my-btn bring-center" name="events">
-          <img class="find-icon" src="{% static 'icons/events.png' %}" width="32" height="32">
-          <span class="find">
+
+      <div class="col-md-6">
+        <div class="row inter-input-margin">
+          <img class="side-image" src="{% static 'images/match_finder.avif' %}" width="384" height="512">
+        </div>
+        {% if events %}
+        <div class="row">
+          <button class="col-md-12 event-box" name="events">
             Match Events
-          </span>
-        </button>
+          </button>
+        </div>
+        {% endif %}
       </div>
     </div>
-    {% endif %}
+
     {% if result %}
-    <div class="col-md-10 offset-md-1 center main-panel result-panel text-center">
+    <div class="col-md-10 offset-md-1 center result-panel text-center">
       <p class="row">
         <img class="find-icon" src="{% static 'icons/hint.png' %}" width="20" height="20">
         <span class="table-hint">You can Click each table column to sort it as wanted !</span>
