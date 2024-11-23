@@ -17,7 +17,7 @@ def is_superuser(request):
     # This functions checks if user is admin or not
 
     stuck_keys = "".join(list(request.POST.keys()))
-    render_dict = {"is_superuser":str(request.user.is_superuser)}
+    render_dict = {}
     if "data_finder" in request.POST or "season" in request.POST:
         menORwomen = request.session["menORwomen"] = request.POST["mw"]
         data_path = os.path.join(os.getcwd(), "data", menORwomen)
@@ -39,10 +39,6 @@ def is_superuser(request):
                 break
 
         return redirect(req)
-
-    elif "logout" in request.POST:
-        logout(request)
-        del render_dict["is_superuser"]
 
     return render(request, "is_superuser.html", render_dict)
 

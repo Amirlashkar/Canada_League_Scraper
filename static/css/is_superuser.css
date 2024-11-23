@@ -29,29 +29,38 @@ body {
   font-family: "Syne";
   color: white;
   margin-top: 150px;
-  padding: 30px;
+  padding: 40px;
 }
 
-.tool {
-  margin-top: 10px;
-  background-color: #050505;
-  border-radius: 0px;
-  border: 0px;
-  font-family: "poppins";
-  padding: 30px;
-  color: white;
-}
-
-.tool:hover {
-  background-color: #464646;
+.tool-row {
+  margin-top: 30px;
 }
 
 .tool-btn {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
   height: 100%;
   background-color: #5e678ea8;
   color: rgb(217, 225, 255);
+  text-align: left;
+  border: 0px;
+  padding: 6px;
 }
 
 .tool-btn:hover {
   background-color: rgba(208, 196, 255, 0.71);
+}
+
+.tool-heading {
+  font-family: "Syne";
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.tool-desc {
+  font-family: "Arimo";
+  font-size: 10px;
+  font-weight: 400;
 }
