@@ -45,7 +45,9 @@ def is_superuser(request):
 
 def analytics(request):
     # the user who is not an admin accessed analitycs url would be redirected to root url
-    if not request.user.is_superuser or "menORwomen" not in request.session:
+    # if not request.user.is_superuser or "menORwomen" not in request.session:
+    #     return redirect("is_superuser")
+    if "menORwomen" not in request.session:
         return redirect("is_superuser")
 
     render_dict = {}
@@ -194,7 +196,9 @@ def analytics(request):
 
 
 def events(request):
-    if not request.user.is_superuser or "menORwomen" not in request.session:
+    # if not request.user.is_superuser or "menORwomen" not in request.session:
+    #     return redirect("is_superuser")
+    if "menORwomen" not in request.session:
         return redirect("is_superuser")
     elif "home" not in request.session:
         return redirect("df_analytics")
@@ -261,8 +265,7 @@ def events(request):
 
 def lineup_eval(request):
     # some lines are repeatitive so i won't write comments on them
-
-    if not request.user.is_superuser or "menORwomen" not in request.session:
+    if "menORwomen" not in request.session:
         return redirect("is_superuser")
 
     render_dict = {}
