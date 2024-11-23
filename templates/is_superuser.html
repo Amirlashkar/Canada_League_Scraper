@@ -11,28 +11,9 @@
 <body>
   <form action="" method="post">
     {% csrf_token %}
-    <div class="col-md-6 offset-md-3 tool-panel">
-      <div class="row col-md-6 offset-md-3 bring-center caution">
-        {% if is_superuser == 'True' %}
-        <input type="submit" id="admin_link" name="logout" hidden>
-        {% else %}
-        <a href="admin" id="admin_link" hidden></a>
-        {% endif %}
-        <p class="caution-p">Are You Superuser?</p>
-        <div class="bn_toggle">
-          <input type="checkbox" id="btn"
-          {% if is_superuser == 'True' %}
-          checked
-          {% endif %}
-          >
-          <label for="btn">
-            <span class="thumb"></span>
-          </label>
-          <div class="light"></div>
-        </div>
-      </div>
 
-      {% if is_superuser == 'True' %}
+    <div class="col-md-6 offset-md-3 tool-panel">
+
       {% if not data_finder and not season%}
       <div class="row col-md-6 offset-md-3 bring-center caution">
         <div class="col-md-6">
@@ -53,45 +34,70 @@
         </div>
       </div>
 
-      <div class="row col-md-10 offset-md-1">
+      <div class="row col-md-10 offset-md-1 tool-row">
         <div class="col-md-6">
-          <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" name="data_finder">
-            Match Finder
+          <button class="col-md-12 tool-btn" name="data_finder">
+            <h4 class="tool-heading">
+              Match Finder
+            </h4>
+            <span>
+              Explores match-based data
+            </span>
           </button>
         </div>
         <div class="col-md-6">
-          <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" name="season">
-            Season Reporter
+          <button class="col-md-12 tool-btn" name="season">
+            <h4 class="tool-heading">
+              Season Reporter
+            </h4>
+            <span>
+              Explores season-based reports
+            </span>
           </button>
         </div>
       </div>
 
       {% else %}
-      <div class="row col-md-10 offset-md-1">
+      <div class="row col-md-10 offset-md-1 tool-row">
         <div class="col-md-6">
-          <button class="row col-md-10 offset-md-1 bring-center tool tool-btn"
+          <button class="col-md-12 tool-btn"
             {% if data_finder %}
             name="df_analytics">
-            Match Information
+            <h4 class="tool-heading">
+              Match Information
+            </h4>
+            <span>
+              Data for specific match
+            </span>
             {% else %}
             name="sr_analytics">
-            Players Stats
+            <h4 class="tool-heading">
+              Players Stats
+            </h4>
+            <span>
+              Seasonal report players
+            </span>
             {% endif %}
           </button>
         </div>
+
         <div class="col-md-6">
-          <button class="row col-md-10 offset-md-1 bring-center tool tool-btn" 
+          <button class="col-md-12 tool-btn"
             {% if data_finder %}
             name="df_lineup_eval"
             {% else %}
             name="sr_lineup_eval"
             {% endif %}
             >
-            Lineup Evaluation
+            <h4 class="tool-heading">
+              Lineup Evaluation
+            </h4>
+            <span>
+              Finds data for specific lineup
+            </span>
           </button>
         </div>
       </div>
-      {% endif %}
       {% endif %}
     </div>
   </form>
