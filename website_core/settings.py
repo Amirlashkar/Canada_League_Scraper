@@ -35,7 +35,11 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(int(os.getenv("DEBUG")))
 
-ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "localhost", "http://aminnabavi.ddns.net"]
+ALLOWED_HOSTS = ["127.0.0.1",
+                 "0.0.0.0",
+                 "localhost",
+                 "http://aminnabavi.ddns.net",
+                 "https://aminnabavi.ddns.net"]
 
 # Application definition
 
@@ -72,7 +76,8 @@ SESSION_FILE_PATH = session_path
 
 CSRF_TRUSTED_ORIGINS = [
     "http://0.0.0.0",
-    "http://aminnabavi.ddns.net"
+    "http://aminnabavi.ddns.net",
+    "https://aminnabavi.ddns.net"
 ]
 
 ROOT_URLCONF = "website_core.urls"
