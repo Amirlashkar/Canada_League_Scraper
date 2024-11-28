@@ -46,7 +46,7 @@
               {{home}}
             </label>
             {% else %}
-            <select name="home-team">
+            <select name="home-team" id="home">
               {% for team in home_teams %}
               <option value="{{team}}">{{team}}</option>
               {% endfor %}
@@ -74,7 +74,7 @@
               {{visitor}}
             </label>
             {% else %}
-            <select name="visitor-team">
+            <select name="visitor-team" id="visitor">
               {% for team in visitor_teams %}
               <option value="{{team}}">{{team}}</option>
               {% endfor %}
@@ -258,6 +258,12 @@
             No such match found on database
           </label>
         </div>
+        {% elif no_side %}
+        <div class="row bring-center row-margin">
+          <label class="col-md-10 offset-md-2 error-box">
+            No {{HV | lower}} data for this match
+          </label>
+        </div>
         {% endif %}
         {% if no_lineup %}
         <div class="row bring-center row-margin">
@@ -312,5 +318,6 @@
   </form>
   <script type="text/javascript" src="{% static 'js/lineup_eval.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/switch.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/update_selects.js' %}"></script>
 </body>
 {% endblock %}
