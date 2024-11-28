@@ -1,6 +1,7 @@
 from copy import copy
 from django.shortcuts import redirect, render
 from django.contrib.auth import logout
+from django.http import JsonResponse
 from scraper.tables_function import convert_min, list_players, data_showoff
 from scraper.constants import show_table, lineup_show_table
 import pandas as pd
@@ -55,8 +56,6 @@ def analytics(request):
     inventory_csv = pd.DataFrame(eval(request.session["inv_csv"]))
     render_dict["home_teams"] = sorted(np.unique(inventory_csv["Home"].to_list()))
     render_dict["visitor_teams"] = sorted(np.unique(inventory_csv["Visitor"].to_list()))
-    # for the matter of user logging
-    print(f"USER: {request.user.username}")
     # check if user directory exists ; if not creates it
     user_path = os.path.join(os.getcwd(), "users", request.user.username)
     if not os.path.exists(user_path):
@@ -64,6 +63,9 @@ def analytics(request):
 
     # conditions different buttons clicking
     if "find-dates" in request.POST:
+        # in case of update_selects functionality
+        if "is_updated" in request.session:
+            del request.session["is_updated"]
 
         # saving selected teams on django sessions also
         home_team = request.session["home"] = request.POST["home-team"]
@@ -118,7 +120,7 @@ def analytics(request):
             data_["time"] = data_.apply(lambda row: convert_min(row["time"]), axis=1)
             data = data_.to_numpy()
             data = data_showoff(data)
-            
+
             # session savings
             request.session["table"] = table.to_dict()
             request.session["PL"] = PL
@@ -129,7 +131,7 @@ def analytics(request):
             render_dict["theaders"] = data_.columns
             # this element controls visualization of some buttons
             render_dict["result"] = True
-            
+
             # feed selected teams to template to show as static tag
             render_dict["home"] = home
             render_dict["visitor"] = visitor
@@ -145,7 +147,12 @@ def analytics(request):
             render_dict["events"] = True
 
         else:
-            render_dict["no_dates"] = True
+            hv_path = os.path.dirname(table_path)
+            if not os.path.exists(hv_path):
+                render_dict["no_side"] = True
+            else:
+                render_dict["no_dates"] = True
+
             render_dict["home"] = home
             render_dict["visitor"] = visitor
             render_dict["selected_date"] = date
@@ -193,6 +200,28 @@ def analytics(request):
             pass
 
     return render(request, "df_analytics.html", render_dict)
+
+
+def update_selects(request):
+    default = None
+    selected_type = request.GET["select_type"]
+    selected_value = request.GET["selected_value"]
+    changing_select = "Home" if selected_type == "visitor" else "Visitor"
+
+    inventory_csv = pd.DataFrame(eval(request.session["inv_csv"]))
+    if "is_updated" in request.session:
+        del request.session["is_updated"]
+        return JsonResponse({"options":[], "default": default})
+
+    else:
+        request.session["is_updated"] = True
+        col = selected_type[0].upper() + selected_type[1:]
+        filtered_df = inventory_csv.loc[inventory_csv[col] == selected_value]
+
+        dynamic_ls = sorted(np.unique(filtered_df[changing_select]))
+        options_ls = [{"id": i, "name": name} for i, name in enumerate(dynamic_ls)]
+
+        return JsonResponse({"options": options_ls, "default": default})
 
 
 def events(request):
@@ -274,6 +303,11 @@ def lineup_eval(request):
     render_dict["visitor_teams"] = sorted(np.unique(inventory_csv["Visitor"].to_list()))
 
     if "find-dates" in request.POST:
+        # in case of update_selects functionality
+        if "is_updated" in request.session:
+            del request.session["is_updated"]
+
+    if "find-dates" in request.POST:
         home_team = request.session["home"] = request.POST["home-team"]
         visitor_team = request.session["visitor"] = request.POST["visitor-team"]
 
@@ -297,7 +331,11 @@ def lineup_eval(request):
                 render_dict["dates"] = matches_date
                 render_dict["reset_available"] = True
             else:
-                render_dict["no_dates"] = True
+                hv_path = os.path.dirname(match_tables_path)
+                if not os.path.exists(hv_path):
+                    render_dict["no_side"] = True
+                else:
+                    render_dict["no_dates"] = True
 
         # this exception is for the case if match folders totally doesn't exists
         except FileNotFoundError:
@@ -348,7 +386,7 @@ def lineup_eval(request):
 
             data = table.to_numpy()
             data = data_showoff(data)
-            
+
             render_dict["theaders"] = table.columns
             render_dict["next_rows"] = data
             render_dict["home"] = home

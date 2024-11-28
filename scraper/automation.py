@@ -354,8 +354,6 @@ class Scraper:
         schematic_name = f"{home_team}_{visitor_team}_{date_of_match}"
         invalids = 0
         for HorV in ("Home", "Visitor"):
-            match_dir = os.path.join(self.tables_path, home_team, visitor_team, date_of_match, HorV)
-            self.check_tables_dir(home_team, visitor_team, date_of_match, HorV)
             raw_df = initial_edit(raw_df, HorV)
 
             try:
@@ -399,6 +397,9 @@ class Scraper:
 
             tasks = [eff_task, pfinal_task, lfinal_task]
             eff_df, pfinal_table, lfinal_table = await asyncio.gather(*tasks)
+
+            match_dir = os.path.join(self.tables_path, home_team, visitor_team, date_of_match, HorV)
+            self.check_tables_dir(home_team, visitor_team, date_of_match, HorV)
 
             cusMin_df.to_csv(os.path.join(match_dir, "CustomMinuteEvents.csv"))
             events_df.to_csv(os.path.join(match_dir, "PAllEvents.csv"))
@@ -450,7 +451,9 @@ class Scraper:
             return df
 
         invalids = await self.raw2table(df, home_team, visitor_team, date_of_match)
-        self.fill_inv(home_team, visitor_team, date_of_match)
+        if invalids == 0:
+            self.fill_inv(home_team, visitor_team, date_of_match)
+
         print(f"{sheet_name} DONE")
         return sheet_name, invalids
 

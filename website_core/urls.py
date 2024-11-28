@@ -26,6 +26,7 @@ urlpatterns = [
     path("", dtf.is_superuser, name="is_superuser"),
     path('logout/', LogoutView.as_view(next_page="is_superuser"), name='logout'),
     path("data_finder/", include("data_finder.urls")),
+    path("update_selects/", dtf.update_selects),
     path("season/", include("season_reporter.urls")),
 ]
 
