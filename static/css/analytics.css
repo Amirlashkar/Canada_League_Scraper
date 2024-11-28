@@ -66,7 +66,8 @@
 }
 
 .side-image {
-  border-radius: 5px;
+  padding: 2%;
+  border-radius: 15px;
 }
 
 .submit-input {
@@ -119,6 +120,7 @@ hr {
 }
 
 select {
+  width: 55%;
   color: rgb(217, 225, 255);
   background-color: rgba(246, 235, 235, 0.26);
   border-radius: 3px;
