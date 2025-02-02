@@ -885,8 +885,94 @@ async def create_pfinal_df(
         for p in pos_contrib:
             globals()[f"pos_contrib{q}"].append((f"quarter{q}", p))
 
+    def calculate_hollinger_score(events_row):
+    """
+    Calculate Hollinger Game Score for a player based on event stats
+    """
+    # Calculate Field Goals Made (FGM)
+    fgm = (events_row['made layup'] + 
+           events_row['made jump shot'] + 
+           events_row['made 3-pt. jump shot'])
+    
+    # Calculate Field Goals Attempted (FGA)
+    fga = (fgm + 
+           events_row['missed layup'] + 
+           events_row['missed jump shot'] + 
+           events_row['missed 3-pt. jump shot'])
+    
+    # Calculate Points (PTS)
+    pts = (2 * (events_row['made layup'] + events_row['made jump shot']) +
+           3 * events_row['made 3-pt. jump shot'] +
+           events_row['made free throw'])
+    
+    # Create the Hollinger Score
+    hollinger = (
+        pts +  # Points
+        0.4 * fgm -  # Field Goals Made
+        0.7 * fga -  # Field Goals Attempted
+        0.4 * (events_row['missed free throw']) +  # Free Throw Penalty
+        0.7 * events_row['offensive rebound'] +  # Offensive Rebounds
+        0.3 * events_row['defensive rebound'] +  # Defensive Rebounds
+        events_row['Steal'] +  # Steals
+        0.7 * events_row['Assist'] +  # Assists
+        0.7 * events_row['Block'] -  # Blocks
+        0.4 * events_row['Foul'] -  # Fouls
+        events_row['Turnover']  # Turnovers
+    )
+    
+    return float(hollinger)
+
+def calculate_shooting_percentage(events_row):
+    """
+    Calculate shooting percentage for a player
+    """
+    # Calculate total shots made
+    shots_made = (events_row['made layup'] + 
+                 events_row['made jump shot'] + 
+                 events_row['made 3-pt. jump shot'])
+    
+    # Calculate total shots attempted
+    total_shots = (shots_made + 
+                  events_row['missed layup'] + 
+                  events_row['missed jump shot'] + 
+                  events_row['missed 3-pt. jump shot'])
+    
+    # Calculate shooting percentage
+    if total_shots > 0:
+        shooting_percentage = (shots_made / total_shots) * 100
+    else:
+        shooting_percentage = 0
+        
+    return round(shooting_percentage, 2)
+
+async def create_pfinal_df(
+    df: pd.DataFrame,
+    HorV: str,
+    date: str,
+    events_df: pd.DataFrame,
+    time_score_df: pd.DataFrame,
+    events_df5min: pd.DataFrame,
+    time_score_df5min: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Creates table of players related statistics with Hollinger efficiency score
+    and shooting percentage
+    """
+    await asyncio.sleep(0)
+    
+    # Add new columns if not present
+    new_columns = ["hollinger_score", "shooting_percentage"]
+    for col in new_columns:
+        if col not in final_columns:
+            final_columns.append(col)
+
     player_final_table = pd.DataFrame(columns=final_columns)
+    
     for _, row in events_df.iterrows():
+        # Calculate Hollinger score and shooting percentage
+        hollinger_score = calculate_hollinger_score(row)
+        shooting_percentage = calculate_shooting_percentage(row)
+        
         showing_pts = 0
         for event, score in list(scoring_values.items()):
             showing_pts += float(row[event] * score)
@@ -906,39 +992,10 @@ async def create_pfinal_df(
         seconds = time_score_df.loc[
             time_score_df[("player", "player")] == row["Player Name"]
         ][("total", "seconds")]
-        time = seconds.iloc[0]
-        global_off_possession = int(row["off_poss"])
-        global_def_possession = int(row["def_poss"])
-
-        eff_pos_contrib_ = points_scored + row[eff_pos_contrib].sum(axis=0)
-        eff_neg_contrib_ = points_conceded + row[eff_neg_contrib].sum(axis=0)
-        global_efficiency = changed_cal_eff(eff_pos_contrib_, eff_neg_contrib_, time)
-
-        if row["Player Name"] in events_df5min["player", "player"].tolist():
-            time_row5min = time_score_df5min.loc[
-                time_score_df5min["player", "player"] == row["Player Name"]
-            ]
-            event_row5min = events_df5min.loc[
-                events_df5min["player", "player"] == row["Player Name"]
-            ]
-            for q in [2, 4]:
-                time = time_row5min[f"quarter{q}", "seconds"].iloc[0]
-                offense = float(
-                    event_row5min[globals()[f"pos_contrib{q}"]].sum(axis=1).iloc[0]
-                )
-                defense = float(
-                    event_row5min[globals()[f"neg_contrib{q}"]].sum(axis=1).iloc[0]
-                )
-                globals()[f"quarter{q}_5min_eff"] = cal_eff(offense, defense, time)
-
-                if time == 0:
-                    globals()[f"quarter{q}_5min_eff"] = "N/A"
-        else:
-            globals()["quarter2_5min_eff"] = "N/A"
-            globals()["quarter4_5min_eff"] = "N/A"
-
+        
         minutes = seconds / 60
         minutes = "{:.2f}".format(minutes.to_list()[0])
+        
         opponent_df = df.loc[pd.isna(df[HorV]) == True]
         opponent = (
             opponent_df.iloc[1]["Home"]
@@ -947,8 +1004,8 @@ async def create_pfinal_df(
         )
 
         try:
-            off_rtg = cal_rtg(points_scored, global_off_possession)
-            def_rtg = cal_rtg(points_conceded, global_def_possession)
+            off_rtg = cal_rtg(points_scored, row["off_poss"])
+            def_rtg = cal_rtg(points_conceded, row["def_poss"])
         except ZeroDivisionError:
             off_rtg = 0
             def_rtg = 0
@@ -966,28 +1023,26 @@ async def create_pfinal_df(
             "DefRtg": [def_rtg],
             "NetRtg": [net_rtg],
             "PtsConceded": [points_conceded],
-            "total off possession": [global_off_possession],
-            "total def possession": [global_def_possession],
-            "global efficiency": [global_efficiency],
-            "quarter2 last 5min efficiency": [quarter2_5min_eff],
-            "quarter4 last 5min efficiency": [quarter4_5min_eff],
+            "total off possession": [row["off_poss"]],
+            "total def possession": [row["def_poss"]],
             "minutes": minutes,
             "home/visitor": HorV,
             "date": date,
             "opponent": opponent,
+            "hollinger_score": [hollinger_score],
+            "shooting_percentage": [shooting_percentage]
         }
 
         new_df = pd.DataFrame(new_row)
         player_final_table = pd.concat(
             [player_final_table,
-            new_df.astype(player_final_table.dtypes)], # astype method is used to ignore concat future warning
+            new_df.astype(player_final_table.dtypes)],
             ignore_index=True, axis=0
         )
 
     player_final_table = player_final_table.reindex(columns=final_columns)
 
     return player_final_table
-
 
 async def create_lfinal_df(
     df: pd.DataFrame,
