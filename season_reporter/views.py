@@ -1,12 +1,20 @@
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 from scraper.tables_function import convert_min, data_showoff
 from scraper.constants import show_table, lineup_show_table
+from season_reporter import functions
 from copy import copy
 import pandas as pd
-import os
+import os, json
+import plotly.express as px
+from plotly.offline import plot
+from plotly.graph_objs import Figure
 
 
 def analytics(request):
+    # in case to check ajax requests
+    body = str(request.body)
+
     # the user who is not an admin accessed analitycs url would be redirected to root url
     if "menORwomen" not in request.session:
         return redirect("is_superuser")
@@ -19,43 +27,65 @@ def analytics(request):
     render_dict["teams"] = teams
 
     if "find-data" in request.POST:
+        functions.reset_plots(request)
+
         team = request.session["team"] = request.POST["team"]
+        team_path = os.path.join(request.session["reports_path"], team)
         PL = request.POST["pl"]
 
-        data_path = os.path.join(request.session["reports_path"], team, f"{PL.upper()[0]}SeasonalReport.csv")
-        table = pd.read_csv(data_path)
+        data_path = os.path.join(team_path, f"{PL.upper()[0]}SeasonalReport.csv")
+        if os.path.exists(data_path):
+            table = pd.read_csv(data_path)
 
-        if PL == "Players":
-            table = table.reindex(columns=show_table)
-            # CAUTION: last 5min efficiencies should first become measured to be shown
-            table = table.drop(columns=table.filter(like="last").columns)
+            per_path = os.path.join(team_path, f"PERSeasonalReport.csv")
+            if os.path.exists(per_path):
+                per_table = pd.read_csv(per_path)
+                p_names = request.session["p_names"] = per_table["Player Name"].to_list()
+                render_dict["p_names"] = p_names
+            else:
+                render_dict["no_plot"] = request.session["no_plot"] = True
+
+            if PL == "Players":
+                table = table.reindex(columns=show_table)
+                # CAUTION: last 5min efficiencies should first become measured to be shown
+                table = table.drop(columns=table.filter(like="last").columns)
+            else:
+                table = table.reindex(columns=lineup_show_table)
+
+            try:
+                table = table.drop(columns=table.filter(like="Unnamed").columns)
+            except:
+                pass
+
+            table = table.rename(columns={"minutes": "time"})
+
+            # sorting players table alphabetically for the first time
+            if PL == "Players":
+                table = table.sort_values(by="Player Name", ascending=True)
+                # tables needed for double bar chart plot
+                if not render_dict.get("no_plot"):
+                    htable = pd.read_csv(os.path.join(team_path, "PHSeasonalReport.csv"))
+                    vtable = pd.read_csv(os.path.join(team_path, "PVSeasonalReport.csv"))
+                    plot_div = functions.create_barchart_div(htable, vtable)
+                    render_dict["pts_plot"] = request.session["pts_plot"] = plot_div
+
+            data_ = copy(table)
+            data_["time"] = data_.apply(lambda row: convert_min(row["time"]), axis=1)
+            data = data_.to_numpy()
+            data = data_showoff(data)
+
+            request.session["table"] = table.to_dict()
+            request.session["PL"] = PL
+
+            render_dict["theaders"] = data_.columns
+            render_dict["next_rows"] = data
+            render_dict["result"] = True
+            render_dict["events"] = True
+            render_dict["selected_team"] = request.session["selected_team"] = team
+            render_dict["PL"] = PL
+
         else:
-            table = table.reindex(columns=lineup_show_table)
-
-        try:
-            table = table.drop(columns=table.filter(like="Unnamed").columns)
-        except:
-            pass
-
-        # sorting players table alphabetically for the first time
-        if PL == "Players":
-            table = table.sort_values(by="Player Name", ascending=True)
-
-        table = table.rename(columns={"minutes": "time"})
-        data_ = copy(table)
-        data_["time"] = data_.apply(lambda row: convert_min(row["time"]), axis=1)
-        data = data_.to_numpy()
-        data = data_showoff(data)
-
-        request.session["table"] = table.to_dict()
-        request.session["PL"] = PL
-
-        render_dict["theaders"] = data_.columns
-        render_dict["next_rows"] = data
-        render_dict["result"] = True
-        render_dict["events"] = True
-        render_dict["selected_team"] = request.session["selected_team"] = team
-        render_dict["PL"] = PL
+            render_dict["no_table"] = True
 
     elif "events" in request.POST:
         return redirect("sr_events")
@@ -78,7 +108,25 @@ def analytics(request):
         render_dict["selected_team"] = request.session["selected_team"]
         render_dict["PL"] = request.session["PL"]
 
+        if not request.session.get("no_plot"):
+            render_dict["pts_plot"] = request.session["pts_plot"]
+            render_dict["p_names"] = request.session["p_names"]
+
+    elif "pperf_select" in body:
+        team_path = os.path.join(request.session["reports_path"], request.session["team"])
+        per_path = os.path.join(team_path, f"PERSeasonalReport.csv")
+        sacc_path = os.path.join(team_path, f"SACCSeasonalReport.csv")
+        per_table = pd.read_csv(per_path)
+        sacc_table = pd.read_csv(sacc_path)
+
+        body_dict = json.loads(request.body)
+        per_plot_div = functions.create_linechart_div(per_table, "PER", body_dict["pperf_select"])
+        sacc_plot_div = functions.create_linechart_div(sacc_table, "Shots Accuracy", body_dict["pperf_select"])
+
+        return JsonResponse({"per_plot_div": per_plot_div, "sacc_plot_div": sacc_plot_div})
+
     elif "reset" in request.POST:
+        functions.reset_plots(request)
         try:
             del request.session["table"]
             del request.session["selected_team"]

@@ -75,6 +75,7 @@
 }
 
 .error-box {
+  font-size: 130%;
   background-color: #c23636eb;
   border-radius: 3px;
   border: 0px;
@@ -121,7 +122,7 @@ hr {
 
 select {
   width: 55%;
-  color: rgb(217, 225, 255);
+  color: black;
   background-color: rgba(246, 235, 235, 0.26);
   border-radius: 3px;
   border: 0px;
@@ -231,6 +232,7 @@ table {
 }
 
 .table-column {
+  text-align: center;
   position: sticky;
   left: 0;
   white-space: nowrap;
@@ -270,4 +272,21 @@ table {
 
 .events {
   margin-top: 60px;
+}
+
+.pts_plot {
+  margin-top: 20px;
+}
+
+.pperf_section {
+  margin-top: 10px;
+}
+
+.pperf {
+  width: 30%;
+  font-size: 15px;
+}
+
+.result-title {
+  margin-bottom: 10px;
 }
