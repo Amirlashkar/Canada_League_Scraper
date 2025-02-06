@@ -308,6 +308,11 @@ def lineup_eval(request):
             del request.session["is_updated"]
 
     if "find-dates" in request.POST:
+        # in case of update_selects functionality
+        if "is_updated" in request.session:
+            del request.session["is_updated"]
+
+    if "find-dates" in request.POST:
         home_team = request.session["home"] = request.POST["home-team"]
         visitor_team = request.session["visitor"] = request.POST["visitor-team"]
 

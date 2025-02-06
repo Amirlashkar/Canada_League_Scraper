@@ -136,10 +136,10 @@ Seasonal Players Stats
           </div>
         </div>
 
-        {% if no_dates %}
+        {% if no_table %}
         <div class="row bring-center row-margin">
             <label class="col-md-10 offset-md-2 error-box">
-              No such match found on database
+              No data for this team
             </label>
         </div>
         {% endif %}
@@ -161,6 +161,7 @@ Seasonal Players Stats
 
     {% if result %}
     <div class="col-md-10 offset-md-1 center main-panel result-panel">
+      <h3 class="result-title">{{PL}} Table</h3>
       <table class="table-width" cellpadding="0" cellspacing="0" border="0">
         <thead class="sticky-header">
           <tr>
@@ -202,10 +203,38 @@ Seasonal Players Stats
           {% endfor %}
         </tbody>
       </table>
+
+      {% if PL == 'Players' %}
+      {% if no_plot %}
+      <div class="row bring-center row-margin">
+          <label class="col-md-10 error-box">
+            Tables for plots doesn't exist
+          </label>
+      </div>
+      {% elif p_names %}
+      <div class="pts_plot">
+        {{pts_plot | safe}}
+      </div>
+      <div class="pperf_section">
+        <h3 class="result-title">Player performance section</h3>
+        <select class="pperf" id="pperf">
+          {% for player in  p_names %}
+          <option value="{{player}}">{{player}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="row col-md-12 pperf_section">
+        <div class="col-md-6" id="PER_plot"></div>
+        <div class="col-md-6" id="SACC_plot"></div>
+      </div>
+      {% endif %}
+      {% endif %}
+
     </div>
     {% endif %}
   </form>
   <script type="text/javascript" src="{% static 'js/lineup_eval.js' %}"></script>
   <script type="text/javascript" src="{% static 'js/switch.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/select_change.js' %}"></script>
 </body>
 {% endblock %}

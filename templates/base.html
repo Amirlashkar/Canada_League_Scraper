@@ -1,14 +1,14 @@
-<!-- importing needed libraries in base.html to use it as parent html and inheritence to other htmls -->
-<!doctype html>
+-<!doctype html>
 {% load static %}
 
 <html>
     <head>	
-      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-      <link href="https://fonts.googleapis.com/css?family=Syne" rel="stylesheet">
-      <link href="https://fonts.googleapis.com/css?family=Arimo" rel="stylesheet">
+      <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet" crossorigin>
+      <link href="https://fonts.googleapis.com/css?family=Syne" rel="stylesheet" crossorigin>
+      <link href="https://fonts.googleapis.com/css?family=Arimo" rel="stylesheet" crossorigin>
+
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -19,6 +19,7 @@
           {% block title %}{% endblock %}
       </title>
       <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+      <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
       <link type="text/css" rel="stylesheet" href="{% static 'css/base.css' %}"/>
     </head>
     <body>

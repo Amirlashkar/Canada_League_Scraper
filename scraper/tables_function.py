@@ -70,6 +70,72 @@ def list_players(df: pd.DataFrame, quarter_index: int, HorV: str) -> Tuple[List[
     return p_list, sts
 
 
+def hollinger_score_(events_row: pd.Series, minutes: float) -> float:
+    """
+    Calculates Player Efficiency Rating based on Hollinger Score
+
+    events_row: row of event table related to specific player;
+    minutes: time that player spend on field by minutes;
+    """
+    # Calculate Field Goals Made (FGM)
+    fgm = (
+        events_row['made layup'] +
+        events_row['made jump shot'] +
+        events_row['made 3-pt. jump shot']
+    )
+
+    # Calculate Field Goals Missed (FG_Missed)
+    fg_missed = (
+        events_row['missed layup'] +
+        events_row['missed jump shot'] +
+        events_row['missed 3-pt. jump shot']
+    )
+
+    hollinger_score = (
+        fgm * 85.910 +
+        events_row['Steal'] * 53.897 +
+        events_row['made 3-pt. jump shot'] * 51.757 +
+        events_row['made free throw'] * 46.845 +
+        events_row['Block'] * 39.190 +
+        events_row['offensive rebound'] * 39.190 +
+        events_row['Assist'] * 34.677 +
+        events_row['defensive rebound'] * 14.707 +
+        events_row['Foul'] * 17.174 +
+        events_row['missed free throw'] * 20.091 +
+        fg_missed * 39.190 +
+        events_row['Turnover'] * 53.897
+    ) / minutes
+
+    return float(hollinger_score.iloc[0])
+
+
+def shots_acc_(events_row: pd.Series):
+    """
+    Calculates how accurate player shots was
+
+    events_row: row of event table related to specific player;
+    """
+
+    # Calculate total shots made
+    shots_made = (events_row['made layup'] +
+                 events_row['made jump shot'] +
+                 events_row['made 3-pt. jump shot'])
+
+    # Calculate total shots attempted
+    total_shots = (shots_made +
+                  events_row['missed layup'] +
+                  events_row['missed jump shot'] +
+                  events_row['missed 3-pt. jump shot'])
+
+    # Calculate shooting percentage
+    if total_shots > 0:
+        shooting_percentage = (shots_made / total_shots) * 100
+    else:
+        shooting_percentage = 0
+
+    return round(shooting_percentage, 2)
+
+
 def cal_eff(offense: int, defense: int, time: float) -> float:
     """
     calculates efficiency based on inputs.
@@ -628,6 +694,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute: float=1) -> Tuple:
                 cached_time = lineup_time_dict["timecache"][-1]
                 if cached_time == "not_changed":
                     enter_time = datetime.strptime("10:00", "%M:%S")
+                    enter_score_index = quarter_indices[quarter - 1] + 1
                     enter_pts = int(
                         df.iloc[enter_score_index]["Score"].split("-")[pts_expression]
                     )
@@ -853,7 +920,7 @@ def main_loop(df: pd.DataFrame, HorV: str, custom_minute: float=1) -> Tuple:
 async def create_pfinal_df(
     df: pd.DataFrame,
     HorV: str,
-    date:str,
+    date: str,
     events_df: pd.DataFrame,
     time_score_df: pd.DataFrame,
     events_df5min: pd.DataFrame,
@@ -938,6 +1005,10 @@ async def create_pfinal_df(
             globals()["quarter4_5min_eff"] = "N/A"
 
         minutes = seconds / 60
+
+        hollinger_score = hollinger_score_(row, minutes)
+        shots_acc = shots_acc_(row)
+
         minutes = "{:.2f}".format(minutes.to_list()[0])
         opponent_df = df.loc[pd.isna(df[HorV]) == True]
         opponent = (
@@ -968,7 +1039,9 @@ async def create_pfinal_df(
             "PtsConceded": [points_conceded],
             "total off possession": [global_off_possession],
             "total def possession": [global_def_possession],
-            "global efficiency": [global_efficiency],
+            # "global efficiency": [global_efficiency],
+            "PER": [hollinger_score],
+            "Shots Accuracy": [shots_acc],
             "quarter2 last 5min efficiency": [quarter2_5min_eff],
             "quarter4 last 5min efficiency": [quarter4_5min_eff],
             "minutes": minutes,
